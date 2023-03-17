@@ -1,10 +1,11 @@
 (ns left-sidebar.core
-  (:require [reagent.core :as r]
-            [reagent.dom :as rdom]))
+  (:require [left-sidebar.roam :as ls]))
 
 
 (defn init []
   (println "Hello from core!")
-  (js/console.log "Hello from roam!"))
+  (ls/append-node))
+
+
 
 
