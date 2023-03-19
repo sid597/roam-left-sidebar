@@ -5,7 +5,10 @@
             [reagent.dom :as rd]
             [cljs.pprint :as pp]
             [hickory.core :as h]
+            [left-sidebar.utils :as utils]
             ["@blueprintjs/core" :refer [Collapse Icon]]))
+
+;; ========== Roam shortcuts ==========
 
 (defn dropdown-menu [html]
   (let [is-open (r/atom false)]
@@ -23,11 +26,11 @@
                        :align-items "center"
 
                        :width "90%"}}
-          [:span [:> Icon {:icon "star"
-                           :size "12px"
-                           :style {:margin-bottom "2px"
-                                   :margin-right "4px"}}]]
-          [:span "SHORTCUTS"]]
+         [:span [:> Icon {:icon "star"
+                          :size "12px"
+                          :style {:margin-bottom "2px"
+                                  :margin-right "4px"}}]]
+         [:span "SHORTCUTS"]]
         [:div {:style {:display "flex"
                        :align-items "center"}}
 
@@ -38,18 +41,36 @@
         [:> Collapse {:is-open @is-open}
          [:div {:dangerouslySetInnerHTML {:__html html}}]]]])))
 
-(defn append-node []
+(defn append-shortcuts-node []
   (let [starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))]
     (.remove (.querySelector js/document ".starred-pages"))
     (rd/render [dropdown-menu starred-pages-html]
                (.querySelector js/document ".title"))))
 
 
-(comment
-   (defn get-starred-pages-as-hiccup []
-     (let [starred-pages         (.querySelector js/document ".starred-pages")
-           shortcut-links        (.-children starred-pages)
-           parsed-shortcut-links (h/parse-fragment (apply str (for [link shortcut-links]
-                                                                (.-outerHTML link))))
-           shortcut-links-hiccup (r/as-element (map h/as-hiccup parsed-shortcut-links))]
-       (pp/pprint shortcut-links-hiccup))))
+
+;; ========== My todos ==========
+
+
+(defn get-todos-for-user []
+  (let [user-uid (utils/get-uid-from-localstorage)
+        username (first (flatten (utils/q '[:find ?username
+                                            :in $ ?user-uid
+                                            :where
+                                            [?eid :user/uid ?user-uid]
+                                            [?eid :user/display-page ?duid]
+                                            [?duid :node/title ?username]]
+                                          user-uid)))]
+    (utils/q '[:find
+               (pull ?node [:block/string :node/title :block/uid])
+               (pull ?node [:block/uid])
+               (pull ?page [:node/title :block/uid :block/string])
+               :in $ ?username
+               :where
+               [?TODO-Ref :node/title "TODO"]
+               [?node-User-Display :node/title ?username]
+               [?node :block/refs ?TODO-Ref]
+               [?node :create/user ?node-User]
+               [?node-User :user/display-page ?node-User-Display]
+               [?node :block/page ?page]]
+             username)))
