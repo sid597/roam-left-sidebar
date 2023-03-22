@@ -18,7 +18,10 @@
 (defn todo-item [block]
   [:a {:href (str "/#/app/resultsgraph/page/" (:uid block))
        :style {:text-decoration "none"}}
-   [:div {:class "todo-item"}
+   [:div {:class "todo-item"
+          :style {:padding "4px 0 4px 4px 4px"
+                  :color "hsl(204,20%,45%)"
+                  :font-family "Inter"}}
 
     [:input {:type "checkbox"
              :style {:margin-right "8px"
