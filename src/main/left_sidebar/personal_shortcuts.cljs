@@ -7,9 +7,19 @@
   (let [username               (utils/get-current-user)
         personal-shortcuts-uid (utils/get-personal-shortcut-page-uid username)]
        (when-not personal-shortcuts-uid
-         (.createPage (.-roamAlphaAPI js/window)
-                      (clj->js {:page
-                                {:title (str username "/left-sidebar/personal-shortcuts")}})))))
+         (-> (.createPage (.-roamAlphaAPI js/window)
+                          (clj->js {:page
+                                    {:title (str username "/left-sidebar/personal-shortcuts")}}))
+             (.then (fn []
+                      (let [new-shortcut-page-uid (utils/get-personal-shortcut-page-uid username)]
+                        (js/console.log "Personal shortcuts page created" new-shortcut-page-uid)
+                        (-> (.createBlock (.-roamAlphaAPI js/window)
+                                          (clj->js {:block
+                                                     {:string ""}
+                                                    :location {:parent-uid new-shortcut-page-uid
+                                                               :order 0}}))))))))))
+
+
 
 (defn get-personal-shortcuts-for-user [username]
   (->> (utils/q '[:find (pull ?shortcut-page-eid [:block/uid :node/title])
@@ -23,7 +33,7 @@
        (mapv first)))
 
 (defn personal-shortcut-item [shortcut]
-  [:a {:href (str "/#/app/resultsgraph/page/" (:uid shortcut))
+  [:a {:href (str "/#/app/" (utils/get-graph-name) "/page/" (:uid shortcut))
        :style {:text-decoration "none"}}
    [:div {:class "personal-shortcut-item"
           :style {:padding "4px 0 4px 4px "

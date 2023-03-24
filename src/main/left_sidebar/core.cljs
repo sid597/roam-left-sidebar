@@ -22,7 +22,8 @@
       (.remove (.querySelector sidebar-container ".starred-pages"))
       (rd/render [:div
                   {:class "collapsable-component-container"
-                   :style {:overflow "scroll"}}
+                   :style {:overflow "scroll"
+                           :padding "15px"}}
                   [:style
                    (str ".personal-shortcut-item:hover{
                               color: #F5F8FA !important;

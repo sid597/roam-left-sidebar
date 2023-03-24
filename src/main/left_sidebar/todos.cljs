@@ -16,7 +16,7 @@
        (mapv first)))
 
 (defn todo-item [block]
-  [:a {:href (str "/#/app/resultsgraph/page/" (:uid block))
+  [:a {:href (str "/#/app/" (utils/get-graph-name) "/page/" (:uid block))
        :style {:text-decoration "none"}}
    [:div {:class "todo-item"
           :style {:padding "4px 0 4px 4px"
@@ -29,8 +29,8 @@
     [:input {:type "checkbox"
              :style {:margin-right "8px"
                      :margin-left "4px"
-                     :accent-color "black"
-                     }
+                     :accent-color "black"}
+
              :on-click #(.updateBlock (.-roamAlphaAPI js/window) (clj->js {:block
                                                                            {:uid (:uid block)
                                                                             :string (str/replace (:string block) "{{[[TODO]]}}" "{{[[DONE]]}}")}}))}]
