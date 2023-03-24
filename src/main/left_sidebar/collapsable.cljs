@@ -37,7 +37,3 @@
        [:> Collapse {:is-open @is-open}
         children]])))
 
-
-
-
-
