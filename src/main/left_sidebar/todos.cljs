@@ -19,13 +19,18 @@
   [:a {:href (str "/#/app/resultsgraph/page/" (:uid block))
        :style {:text-decoration "none"}}
    [:div {:class "todo-item"
-          :style {:padding "4px 0 4px 4px 4px"
+          :style {:padding "4px 0 4px 4px"
                   :color "hsl(204,20%,45%)"
-                  :font-family "Inter"}}
-
+                  :font-family "Inter"
+                  :line-height "1.5"
+                  :font-size "15px"
+                  :font-weight "500"
+                  :border-radius "3px"}}
     [:input {:type "checkbox"
              :style {:margin-right "8px"
-                       :accent-color "black"}
+                     :margin-left "4px"
+                     :accent-color "black"
+                     }
              :on-click #(.updateBlock (.-roamAlphaAPI js/window) (clj->js {:block
                                                                            {:uid (:uid block)
                                                                             :string (str/replace (:string block) "{{[[TODO]]}}" "{{[[DONE]]}}")}}))}]

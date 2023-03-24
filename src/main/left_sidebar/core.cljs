@@ -16,15 +16,33 @@
         personal-shortcuts (r/atom (personal-shortcuts/get-personal-shortcuts-for-user user))
         starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))]
     (.setAttribute todo-container "class" "todos-sidebar-container")
+    (personal-shortcuts/add-personal-shortcut-command-in-menu)
+    (personal-shortcuts/create-personal-shortcuts-page)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
-      (rd/render [:<>
-                  [collapsable/collapsable-section "SHORTCUTS" "globe"
+      (rd/render [:div
+                  {:class "collapsable-component-container"
+                   :style {:overflow "scroll"}}
+                  [:style
+                   (str ".personal-shortcut-item:hover{
+                              color: #F5F8FA !important;
+                              background-color: #10161A;
+                              }
+                              .page:hover{
+                              color: #F5F8FA;
+                              background-color: #10161A;
+                              }
+                              .todo-item:hover {
+                              color: #F5F8FA !important;
+                              background-color: #10161A;
+                              }")]
+                  [collapsable/collapsable-section "Global Shortcuts" "globe"
                    [global-shortcuts/starred-pages-component starred-pages-html]]
-                  [collapsable/collapsable-section "TODOS" "tick"
-                   [todos/todos-component todos-list]]
-                  [collapsable/collapsable-section "SHORTCUTS" "person"
-                   [personal-shortcuts/personal-shortcuts-component personal-shortcuts]]]
+                  [collapsable/collapsable-section "Personal Shortcuts" "person"
+                    [personal-shortcuts/personal-shortcuts-component personal-shortcuts]]
+                  [collapsable/collapsable-section "My Todos" "tick"
+                   [todos/todos-component todos-list]]]
+
                  sidebar-container)
       ;; This is a hack to get the todos to update, we can use
       ;; mutation observers to do this better but it also complicates

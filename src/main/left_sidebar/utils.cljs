@@ -1,6 +1,8 @@
 (ns left-sidebar.utils
   (:require [cljs.pprint :as pp]
             [cljs.reader :as reader]
+            [hickory.core :as h]
+            [hickory.select :as h-select]
             [clojure.string :as str]))
 
 (defn q
@@ -52,6 +54,13 @@
     (nth url-parts 5)))
 
 
+(defn get-personal-shortcut-page-uid [username]
+  (first (flatten (q '[:find ?page-uid
+                       :in $ ?username
+                       :where
+                       [?eid :node/title ?username]
+                       [?eid :block/uid ?page-uid]]
+                     (str username "/left-sidebar/personal-shortcuts")))))
 
 (comment
 
@@ -63,7 +72,6 @@
           parsed-shortcut-links (h/parse-fragment (apply str (for [link shortcut-links]
                                                                (.-outerHTML link))))
           shortcut-links-hiccup (r/as-element (map h/as-hiccup parsed-shortcut-links))]
-      (pp/pprint shortcut-links-hiccup)
       shortcut-links-hiccup))
 
 
