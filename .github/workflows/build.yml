@@ -24,6 +24,11 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Set up Clojure CLI tools
+        uses: DeLaGuardo/setup-clojure@3.5
+        with:
+          cli: "1.10.3.1045"
+
       - name: Build the optimized release using shadow-cljs
         run: npx shadow-cljs release app
 
