@@ -1,6 +1,7 @@
 (ns left-sidebar.todos
   (:require [left-sidebar.utils :as utils]
             [clojure.string :as str]
+            [clojure.edn :as edn]
             ["@blueprintjs/core" :refer [Collapse Icon]]
             [reagent.core :as r]))
 
@@ -49,11 +50,11 @@
 
 
 (defn todos-component [todos]
-  (println "todos component" @todos)
   [:div {:class "todos"}
-   (for [todo @todos]
-     ^{:key (:uid todo)}
-     [todo-item todo])])
+   (when @todos
+     (for [todo @todos]
+       ^{:key (:uid todo)}
+       [todo-item todo]))])
 
 
 (defn get-todos-for-user [username]
@@ -70,26 +71,26 @@
        (mapv first)))
 
 
+(defn get-custom-query [query-block-uid]
+  (first (first (utils/q '[:find ?query-string
+                           :in $ ?query-block-uid
+                           :where
+                           [?e :block/uid ?query-block-uid]
+                           [?e :block/children ?scratch-child]
+                           [?scratch-child :block/string "scratch"]
+                           [?scratch-child :block/children ?custom-child]
+                           [?custom-child :block/string "custom"]
+                           [?custom-child :block/children ?query-child]
+                           [?query-child :block/string ?query-string]]
+                         query-block-uid))))
+
 (defn get-todos-from-query-block []
   (let [username          (utils/get-current-user)
         query-page        (str username "/left-sidebar/my todos")
-        query-block-uid   (utils/get-child-of-block-with-text-on-page "My todo query" query-page)]
-    (-> js/window
-        .-roamjs
-        .-extension
-        .-queryBuilder
-        (.runQuery query-block-uid))))
-
-
-
-(defn get-todos-list [username]
-  (let [todos-list-atom (r/atom nil)]
-    (.then (get-todos-from-query-block) (fn [todos]
-                                          (reset! todos-list-atom
-                                                  (js->clj todos :keywordize-keys true))))
-    (println "----" @todos-list-atom)
-    (println "====" @(r/atom (get-todos-for-user username)))
-    (if todos-list-atom
-        todos-list-atom
-        (r/atom (get-todos-for-user username)))))
-
+        query-block-uid   (utils/get-child-of-block-with-text-on-page "My todo query" query-page)
+        custom-query      (get-custom-query query-block-uid)
+        query-result      (->> (utils/q (edn/read-string custom-query))
+                               (mapv first))]
+    (if (empty? query-result)
+      (get-todos-for-user username)
+      query-result)))

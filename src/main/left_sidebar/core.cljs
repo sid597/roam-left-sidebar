@@ -12,13 +12,12 @@
   (let [user               (utils/get-current-user)
         sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
         todo-container     (js/document.createElement "div")
-        todos-list         (todos/get-todos-list user)
+        todos-list         (r/atom (todos/get-todos-from-query-block))
         personal-shortcuts (r/atom (personal-shortcuts/get-personal-shortcuts-for-user user))
         starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))]
     (.setAttribute todo-container "class" "todos-sidebar-container")
     (personal-shortcuts/add-personal-shortcut-command-in-menu)
     (personal-shortcuts/create-personal-shortcuts-page)
-    (println "=====> " todos-list)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
       (rd/render [:div
@@ -50,7 +49,7 @@
       ;; mutation observers to do this better but it also complicates
       ;; things.
       (js/setInterval (fn []
-                          (reset! todos-list (todos/get-todos-for-user user))
+                          (reset! todos-list (todos/get-todos-from-query-block))
                           (reset! personal-shortcuts (personal-shortcuts/get-personal-shortcuts-for-user user))) 1000))))
 
 (defn stop []
