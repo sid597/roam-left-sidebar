@@ -62,6 +62,25 @@
                        [?eid :block/uid ?page-uid]]
                      (str username "/left-sidebar/personal-shortcuts")))))
 
+(defn get-my-todos-page-uid [username]
+  (first (flatten (q '[:find ?page-uid
+                       :in $ ?username
+                       :where
+                       [?eid :node/title ?username]
+                       [?eid :block/uid ?page-uid]]
+                     (str username "/left-sidebar/my-todos")))))
+
+(defn get-child-of-block-with-text-on-page [block-text page-title]
+  (first (flatten (q '[:find ?child-uid
+                       :in $ ?block-text ?page-title
+                       :where
+                       [?page-eid :node/title ?page-title]
+                       [?page-eid :block/children ?block-uid]
+                       [?block-uid :block/string ?block-text]
+                       [?block-uid :block/children ?child-eid]
+                       [?child-eid :block/uid ?child-uid]]
+                     block-text page-title))))
+
 (comment
 
   ;; Functions below are not used anymore, but I'm keeping them here
