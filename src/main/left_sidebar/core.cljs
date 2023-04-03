@@ -1,18 +1,20 @@
 (ns left-sidebar.core
-  (:require [reagent.core :as r]
-            [reagent.dom :as rd]
-            [left-sidebar.utils :as utils]
-            [left-sidebar.global-shortcuts :as global-shortcuts]
-            [left-sidebar.personal-shortcuts :as personal-shortcuts]
-            [left-sidebar.collapsable :as collapsable]
-            [left-sidebar.todos :as todos]))
+  (:require
+    [clojure.edn :as edn]
+    [reagent.core :as r]
+    [reagent.dom :as rd]
+    [left-sidebar.utils :as utils]
+    [left-sidebar.global-shortcuts :as global-shortcuts]
+    [left-sidebar.personal-shortcuts :as personal-shortcuts]
+    [left-sidebar.collapsable :as collapsable]
+    [left-sidebar.todos :as todos]))
 
 
 (defn start []
   (let [user               (utils/get-current-user)
         sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
         todo-container     (js/document.createElement "div")
-        todos-list         (r/atom (todos/get-todos-from-query-block))
+        ;todos-list         (r/atom (todos/get-todos-from-query-block))
         personal-shortcuts (r/atom (personal-shortcuts/get-personal-shortcuts-for-user user))
         starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))]
     (.setAttribute todo-container "class" "todos-sidebar-container")
@@ -42,15 +44,15 @@
                   [collapsable/collapsable-section "Personal Shortcuts" "person"
                     [personal-shortcuts/personal-shortcuts-component personal-shortcuts]]
                   [collapsable/collapsable-section "My Todos" "tick"
-                   [todos/todos-component todos-list]]]
+                   [todos/todos-component "sync query" "sid/left-sidebar/my todos"]]]
 
                  sidebar-container)
       ;; This is a hack to get the todos to update, we can use
       ;; mutation observers to do this better but it also complicates
       ;; things.
-      (js/setInterval (fn []
-                          (reset! todos-list (todos/get-todos-from-query-block))
-                          (reset! personal-shortcuts (personal-shortcuts/get-personal-shortcuts-for-user user))) 1000))))
+      #_(js/setInterval (fn []
+                            (reset! todos-list (todos/get-todos-from-query-block))
+                            (reset! personal-shortcuts (personal-shortcuts/get-personal-shortcuts-for-user user))) 1000))))
 
 (defn stop []
   (let [sidebar-container (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
@@ -59,6 +61,8 @@
       (rd/unmount-component-at-node todos-sidebar-container)
       (.removeChild sidebar-container todos-sidebar-container))))
 
+
 (defn init []
   (println "Hello from left-sidebar plugin!")
-  (start))
+  ;(pw)
+ (start))
