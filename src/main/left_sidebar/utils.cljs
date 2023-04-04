@@ -81,6 +81,17 @@
                        [?child-eid :block/uid ?child-uid]]
                      block-text page-title))))
 
+(defn get-page-name-from-ref [list-of-pages]
+  (remove nil? (map (fn [s]
+                      (println s)
+                      (second (re-find #"\[\[(.+)\]\]" s)))
+                    list-of-pages)))
+
+
+(defn is-todo-block? [s]
+  (let [first-word (first (clojure.string/split s #"\s+"))]
+    (= first-word "{{[[TODO]]}}")))
+
 (comment
 
   ;; Functions below are not used anymore, but I'm keeping them here

@@ -6,9 +6,7 @@
             ["@blueprintjs/core" :refer [Collapse Icon]]
             [reagent.core :as r]))
 
-(defn is-todo-block? [s]
-  (let [first-word (first (clojure.string/split s #"\s+"))]
-    (= first-word "{{[[TODO]]}}")))
+
 
 (defn create-my-todos-page []
   (let [username               (utils/get-current-user)
@@ -33,7 +31,7 @@
   (let [string (or(:block/string block) (get block ":block/string"))
 
         uid    (or (:block/uid block)(get block ":block/uid"))
-        todo-block? (is-todo-block? string)]
+        todo-block? (utils/is-todo-block? string)]
 
     [:a {:href (str "/#/app/" (utils/get-graph-name) "/page/" uid)
          :style {:text-decoration "none"}}
@@ -45,16 +43,19 @@
                     :font-size "15px"
                     :font-weight "500"
                     :border-radius "3px"}}
-      [:input {:type "checkbox"
-               :style {:margin-right "8px"
-                       :margin-left "4px"
-                       :accent-color "black"}
+      (if todo-block?
+        [:<>
+         [:input {:type "checkbox"
+                  :style {:margin-right "8px"
+                          :margin-left "4px"
+                          :accent-color "black"}
 
-               :on-click #(.updateBlock (.-roamAlphaAPI js/window) (clj->js {:block
-                                                                             {:uid uid
-                                                                              :string (str/replace string "{{[[TODO]]}}" "{{[[DONE]]}}")}}))}]
-      (-> string
-          (str/replace "{{[[TODO]]}}" " "))]]))
+                  :on-click #(.updateBlock (.-roamAlphaAPI js/window) (clj->js {:block
+                                                                                {:uid uid
+                                                                                 :string (str/replace string "{{[[TODO]]}}" "{{[[DONE]]}}")}}))}]
+         (-> string
+             (str/replace "{{[[TODO]]}}" " "))]
+        string)]]))
 
 
 (defn todos-component [results-from page-title]

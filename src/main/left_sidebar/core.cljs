@@ -6,6 +6,7 @@
     [left-sidebar.utils :as utils]
     [left-sidebar.global-shortcuts :as global-shortcuts]
     [left-sidebar.personal-shortcuts :as personal-shortcuts]
+    [left-sidebar.user-left-sidebar :as user-left-sidebar]
     [left-sidebar.collapsable :as collapsable]
     [left-sidebar.todos :as todos]))
 
@@ -22,12 +23,12 @@
     (personal-shortcuts/create-personal-shortcuts-page)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
-      (rd/render [:div
-                  {:class "collapsable-component-container"
-                   :style {:overflow "scroll"
-                           :padding "15px"}}
-                  [:style
-                   (str ".personal-shortcut-item:hover{
+      (rd/render  [:div
+                         {:class "collapsable-component-container"
+                          :style {:overflow "scroll"
+                                  :padding "15px"}}
+                         [:style
+                          (str ".personal-shortcut-item:hover{
                               color: #F5F8FA !important;
                               background-color: #10161A;
                               }
@@ -39,12 +40,14 @@
                               color: #F5F8FA !important;
                               background-color: #10161A;
                               }")]
-                  [collapsable/collapsable-section "Global Shortcuts" "globe"
-                   [global-shortcuts/starred-pages-component starred-pages-html]]
-                  [collapsable/collapsable-section "Personal Shortcuts" "person"
-                    [personal-shortcuts/personal-shortcuts-component personal-shortcuts]]
-                  [collapsable/collapsable-section "My Todos" "tick"
-                   [todos/todos-component "sync query" "sid/left-sidebar/my todos"]]]
+                         #_[collapsable/collapsable-section "Global Shortcuts" "globe"
+                            [global-shortcuts/starred-pages-component starred-pages-html]]
+                         #_[collapsable/collapsable-section "Personal Shortcuts" "person"
+                             [personal-shortcuts/personal-shortcuts-component personal-shortcuts]]
+                         #_[collapsable/collapsable-section "My Todos" "tick"
+                            [todos/todos-component "sync query" "sid/left-sidebar/my todos"]]
+                    (user-left-sidebar/get-user-left-sidebar-list "sid")]
+
 
                  sidebar-container)
       ;; This is a hack to get the todos to update, we can use
