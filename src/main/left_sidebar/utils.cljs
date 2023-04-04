@@ -70,6 +70,15 @@
                        [?eid :block/uid ?page-uid]]
                      (str username "/left-sidebar/my-todos")))))
 
+(defn get-block-uid-for-block-on-page [block-text page-title]
+  (first (first (q '[:find ?block-uid
+                     :in $ ?block-text ?page-title
+                     :where
+                     [?page-eid :node/title ?page-title]
+                     [?page-eid :block/children ?block-eid]
+                     [?block-eid :block/string ?block-text]
+                     [?block-eid :block/uid ?block-uid]]
+                   block-text page-title))))
 (defn get-child-of-block-with-text-on-page [block-text page-title]
   (first (flatten (q '[:find ?child-uid
                        :in $ ?block-text ?page-title

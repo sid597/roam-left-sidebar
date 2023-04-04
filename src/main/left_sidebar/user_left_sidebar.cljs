@@ -20,21 +20,21 @@
 
 
 (defn get-children-from-async-query [page-title]
-  (let [query-block (str (utils/get-child-of-block-with-text-on-page "Section-children" page-title))]
+  (let [query-block (str (utils/get-child-of-block-with-text-on-page "Left-sidebar-Section-children" page-title))]
     (-> (.runQuery (.-queryBuilder (.-extension (.-roamjs js/window)))
                    (str query-block))
         (.then (fn [res]
-                 (println "async query" (js->clj res))
+                 (println "4.async query" (js->clj res))
                 (js->clj res :value-fn custom-keyword))))))
 
 
 (defn get-children-from-sync-query [page-title todos]
-  (println "---- sync query todos "@todos)
+  (println "4.---- sync query todos " page-title @todos)
   (let [query-result-block-uid (first (first (utils/q '[:find ?block-uid
                                                         :in $ ?page-title
                                                         :where [?e :node/title ?page-title]
                                                         [?e :block/children ?e-children]
-                                                        [?s-children :block/string "Reactive query results"]
+                                                        [?s-children :block/string "Left-sidebar-Reactive-query-results"]
                                                         [?s-children :block/uid ?block-uid]]
                                                       page-title)))
         callback               (fn [_ after]
@@ -42,7 +42,7 @@
                                        stripped-str (subs input-str 6 (- (count input-str) 6))
                                        cljs-data (reader/read-string stripped-str)]
                                    cljs-data))]
-    (println "query-result-block-uid" query-result-block-uid)
+    (println "5.query-result-block-uid" query-result-block-uid)
     (-> (get-children-from-async-query page-title)
         (.then (fn [res]
                  (reset! todos res))))
@@ -80,11 +80,11 @@
                                                            :in $ ?page-title
                                                            :where [?e :node/title ?page-title]
                                                            [?e :block/children ?e-children]
-                                                           [?e-children :block/string "Section-children"]
+                                                           [?e-children :block/string "Left-sidebar-Section-children"]
                                                            [?e-children :block/children ?s-e-children]
                                                            [?s-e-children :block/string ?s-children]]
                                                       page-title)))]
-    (println "children-from-blocks" children-from-blocks)
+    (println "4.children-from-blocks" children-from-blocks)
     children-from-blocks))
 
 
@@ -124,7 +124,7 @@
                                                        :in $ ?page-title
                                                        :where [?e :node/title ?page-title]
                                                        [?e :block/children ?e-children]
-                                                       [?e-children :block/string "Settings"]
+                                                       [?e-children :block/string "Left-sidebar-Settings"]
                                                        [?e-children :block/children ?s-children]
                                                        (or (and [?s-children :block/string "Show results from"]
                                                                 [?s-children :block/children ?s-c-children]
@@ -137,7 +137,7 @@
         on-success                (fn [res]
                                     (println "on success" res)
                                     (reset! children res))]
-    (println "results from" results-from)
+    (println "3.results from:" results-from)
     (cond (= results-from
              "sync query")  (-> (get-children-from-sync-query page-title children)
                                 (.then on-success))
@@ -145,19 +145,19 @@
              "async query") (-> (get-children-from-async-query page-title)
                                 (.then on-success))
           (= results-from
-             "blocks")      (do (println "ooooooooooooooooooo" (get-children-from-blocks page-title))
-                                (on-success (get-children-from-blocks page-title))))
+             "blocks")      (on-success (get-children-from-blocks page-title)))
 
 
     (fn []
-      [:div {:class (str "left-sidebar-section-children" page-title)}
+      [:div {:class (str "left-sidebar-section children" page-title)}
          (when @children
-           (for [child @children]
+           (for [child @children
+                 _ (do (println "6.child" child) nil)]
              ^{:key (or (:block/uid child)
                         (get child ":block/uid"))}
              [section-child-item child]))])))
 
-(section-child-component "sid/left-sidebar/personal-shortcuts")
+;(section-child-component "sid/left-sidebar/personal-shortcuts")
 
 
 (defn get-user-left-sidebar-list [username]
@@ -172,15 +172,16 @@
                                                                                  (str username "/left-sidebar"))))]
 
     (cljs.pprint/pprint  (mapv #(section-child-component %) sidebar-section-titles))
-    (println "section-titles" sidebar-section-titles  (count sidebar-section-titles))
+    (println "1.section-titles" sidebar-section-titles  (count sidebar-section-titles))
     ;[section-child-component "sid/left-sidebar/personal-shortcuts"]
     (for [section-title sidebar-section-titles
-          :let [section-title-for-comp (last (str/split  section-title #"/"))]]
+          :let [section-title-for-comp (last (str/split  section-title #"/"))
+                _ (do (println "2.section-title" section-title-for-comp) nil)]]
       ^{:key section-title}
       [collapsable/collapsable-section section-title-for-comp nil
        [section-child-component section-title]])))
 
 
-(get-user-left-sidebar-list "sid")
+;(get-user-left-sidebar-list "sid")
 
 
