@@ -20,7 +20,7 @@
 
 
 (defn get-children-from-async-query [page-title]
-  (let [query-block (str (utils/get-child-of-block-with-text-on-page "Left-sidebar-Section-children" page-title))]
+  (let [query-block (str (utils/get-child-of-block-with-text-on-page "Section-children" page-title))]
     (-> (.runQuery (.-queryBuilder (.-extension (.-roamjs js/window)))
                    (str query-block))
         (.then (fn [res]
@@ -34,7 +34,7 @@
                                                         :in $ ?page-title
                                                         :where [?e :node/title ?page-title]
                                                         [?e :block/children ?e-children]
-                                                        [?s-children :block/string "Left-sidebar-Reactive-query-results"]
+                                                        [?s-children :block/string "Reactive-query-results"]
                                                         [?s-children :block/uid ?block-uid]]
                                                       page-title)))
         callback               (fn [_ after]
@@ -80,7 +80,7 @@
                                                            :in $ ?page-title
                                                            :where [?e :node/title ?page-title]
                                                            [?e :block/children ?e-children]
-                                                           [?e-children :block/string "Left-sidebar-Section-children"]
+                                                           [?e-children :block/string "Section-children"]
                                                            [?e-children :block/children ?s-e-children]
                                                            [?s-e-children :block/string ?s-children]]
                                                       page-title)))]
@@ -124,7 +124,7 @@
                                                        :in $ ?page-title
                                                        :where [?e :node/title ?page-title]
                                                        [?e :block/children ?e-children]
-                                                       [?e-children :block/string "Left-sidebar-Settings"]
+                                                       [?e-children :block/string "Settings"]
                                                        [?e-children :block/children ?s-children]
                                                        (or (and [?s-children :block/string "Show results from"]
                                                                 [?s-children :block/children ?s-c-children]
@@ -141,9 +141,9 @@
     (cond (= results-from
              "sync query")  (-> (get-children-from-sync-query page-title children)
                                 (.then on-success))
-          (= results-from
-             "async query") (-> (get-children-from-async-query page-title)
-                                (.then on-success))
+          #_#_(= results-from
+                 "async query") (-> (get-children-from-async-query page-title)
+                                    (.then on-success))
           (= results-from
              "blocks")      (on-success (get-children-from-blocks page-title)))
 
