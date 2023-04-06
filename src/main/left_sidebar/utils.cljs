@@ -71,7 +71,7 @@
                      (str username "/left-sidebar/my-todos")))))
 
 (defn get-block-uid-for-block-on-page [block-text page-title]
-  (first (first (q '[:find ?block-uid
+  (first (first (q '[:find (pull ?block-eid [:block/string :block/uid {:block/children ...}])
                      :in $ ?block-text ?page-title
                      :where
                      [?page-eid :node/title ?page-title]
@@ -100,6 +100,107 @@
 (defn is-todo-block? [s]
   (let [first-word (first (clojure.string/split s #"\s+"))]
     (= first-word "{{[[TODO]]}}")))
+
+
+(defn get-child-block-with-text [parent-uid child-text]
+  (first (first (q '[:find (pull ?ce [:block/string :block/uid {:block/children ...}])
+                     :in $ ?parent-uid ?child-text
+                     :where
+                     [?e :block/uid ?parent-uid]
+                     [?e :block/children ?ce]
+                     [?ce :block/string ?child-text]]
+                   parent-uid child-text))))
+
+(defn get-child-of-child-under-block [block-uid child-text child-child-text]
+  (println "block-uid" block-uid "child-text" child-text "child-child-text" child-child-text)
+  (first (first (q '[:find (pull ?cce [:block/string :block/uid])
+                     :in $ ?block-uid ?child-text ?child-child-text
+                     :where [?e :block/uid ?block-uid]
+                            [?e :block/children ?ce]
+                            [?ce :block/string ?child-text]
+                            [?ce :block/children ?cce]
+                            [?cce :block/string ?child-child-text]]
+                   block-uid child-text child-child-text))))
+
+(get-child-of-child-under-block "O84zhInr1" "Settings" "Open?: True")
+
+(defn get-left-sidebar-section-uids-for-current-user []
+  (let [username (get-current-user)]
+    (mapv first (q '[:find ?section-uid
+                     :in $ ?user-left-sidebar
+                     :where
+                     [?eid :node/title ?user-left-sidebar]
+                     [?eid :block/children ?section-eid]
+                     [?section-eid :block/string "Sections"]
+                     [?section-eid :block/children ?section-children-eid]
+                     [?section-children-eid :block/uid ?section-uid]]
+                   (str username "/left-sidebar")))))
+
+(defn get-children-for-eid [eid]
+  (first (first (q '[:find (pull ?e [:block/string :block/uid {:block/children ...}])
+                     :in $ ?e]
+                    eid))))
+;(get-children-for-eid (first (get-left-sidebar-section-uids-for-current-user)))
+(get-left-sidebar-section-uids-for-current-user)
+
+(defn str-to-num [s]
+  (let [n (js/parseInt s)]
+    (if (js/isNaN n)
+      nil
+      n)))
+
+
+(defn str-to-bool [s]
+  (cond
+    (= s "true") true
+    (= s "false") false
+    :else nil))
+(defn parse-time [time-str]
+  (let [time-regex #"(\d+)([smhd])"
+        matches (re-seq time-regex time-str)]
+    (reduce (fn [acc match]
+              (let [value (js/parseInt (second match))
+                    unit (last match)]
+                (assoc acc unit value)))
+            {}
+            matches)))
+
+(defn get-milliseconds-from [time-str]
+  (let [time-map (parse-time time-str)
+        seconds (get time-map "s" 0)
+        minutes (get time-map "m" 0)
+        hours (get time-map "h" 0)
+        days (get time-map "d" 0)]
+    (+ (* seconds 1000)
+       (* minutes 60 1000)
+       (* hours 60 60 1000)
+       (* days 24 60 60 1000))))
+
+(defn truncate-str
+  [s n]
+  (let [sl (count s)]
+    (if (> sl n)
+      (str (subs s 0  n) "...")
+      s)))
+(truncate-str "hello world" 53)
+
+(defn pull-children [uid]
+  (first (first (q '[:find (pull ?e [:block/string {:block/children ...}])
+                     :in $ ?uid
+                     :where
+                     [?e :block/uid ?uid]]
+                   uid))))
+(defn custom-keyword [key]
+  (println "+++" key)
+  (if (.startsWith (str key) ":")
+    (keyword (subs (str key) 2))
+    (keyword key)))
+
+(defn query-builder-run-query [query-block]
+  (-> (.runQuery (.-queryBuilder (.-extension (.-roamjs js/window)))
+                 (str query-block))
+      (.then (fn [res]
+               (js->clj res :value-fn custom-keyword)))))
 
 (comment
 
