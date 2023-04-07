@@ -25,8 +25,8 @@
                                            (str (utils/get-current-user) "/left-sidebar")))
         section-settings (merge transformed-data actions-to-take)
         all-settings     (merge general-settings section-settings)]
-    (println "all settings -------------------")
-    (cljs.pprint/pprint all-settings)
+    ;(println "all settings -------------------")
+    ;(cljs.pprint/pprint all-settings)
     {:type           (or (:Type all-settings)
                          "blocks-and-pages")
      :show           (or (when (:Show all-settings)
@@ -191,6 +191,19 @@
                   (callback (or (:children child-block)
                                 []))))))
 
+(defn- process-section-uids [section-uids section-children]
+  (keep (fn [section-uid]
+          (let [section-settings (get-settings-for-section section-uid)
+                children-atom (get section-children section-uid)
+                rt (:refresh-time section-settings)]
+            (when (and rt (not= rt 0))
+              (fn []
+                (js/setInterval
+                  (fn []
+                    (get-children-for-section section-uid section-settings (fn [res]
+                                                                             (reset! children-atom res))))
+                  rt)))))
+        section-uids))
 
 
 (defn left-sidebar-sections []
@@ -204,16 +217,9 @@
         (get-children-for-section section-uid section-settings (fn [res]
                                                                  (println "section uid " section-uid " ---res---" res)
                                                                  (reset! children-atom res)))))
-
-    (js/setInterval (fn []
-                      #_(println "*****section uid***** ")
-                      (let [section-uid "O84zhInr1"
-                            section-settings (get-settings-for-section "O84zhInr1")]
-                        (get-children-for-section section-uid section-settings (fn [res]
-                                                                                 (reset! (get section-children "O84zhInr1") res)))))
-                                                                                 ;(println "*****section uid***** " (get section-children "O84zhInr1") " ---res---" res)))))
-
-                   2000)
+    (let [processed-fns (process-section-uids section-uids section-children)]
+      (doseq [f processed-fns]
+        (f)))
     (fn []
       [:div {:class "left-sidebar-sections"}
        (doall
@@ -227,13 +233,68 @@
                                                       (get child ":block/uid")
                                                       (:uid child))}
                                            [:div [section-child-item child section-settings]]))]
-                 [:div {:key section-uid}
-                  ;@children-list
-                  [section-component section-settings
-                   section-uid
-                   @children-list]])
+               [:div {:key section-uid}
+                ;@children-list
+                [section-component section-settings
+                 section-uid
+                 @children-list]])
              ;[section-child-item child section-settings]))]
              [:div {:key section-uid} "Loading..."])))])))
+
+
+#_(defn left-sidebar-sections []
+    (let [section-uids (utils/get-left-sidebar-section-uids-for-current-user)
+          section-children (->> section-uids
+                                (map (fn [uid] [uid (r/atom nil)]))
+                                (into {}))]
+      (doseq [section-uid section-uids]
+        (let [section-settings (get-settings-for-section section-uid)
+              children-atom (get section-children section-uid)]
+          (get-children-for-section section-uid section-settings (fn [res]
+                                                                   (println "section uid " section-uid " ---res---" res)
+                                                                   (reset! children-atom res)))))
+      (let [processed-fns (remove nil?
+                                  (mapv (fn [section-uid]
+                                          (let [section-settings (get-settings-for-section section-uid)
+                                                children-atom (get section-children section-uid)
+                                                rt (:refresh-time section-settings)]
+                                            (when (and rt (not= rt "0"))
+                                              (fn []
+                                                (get-children-for-section section-uid section-settings (fn [res]
+                                                                                                           (reset! children-atom res)))))))
+
+                                        section-uids))]
+        (doseq [f processed-fns]
+              (f)))
+      #_(js/setInterval (fn []
+                          #_(println "*****section uid***** ")
+                          (let [section-uid "O84zhInr1"
+                                section-settings (get-settings-for-section "O84zhInr1")]
+                            (get-children-for-section section-uid section-settings (fn [res]
+                                                                                     (reset! (get section-children "O84zhInr1") res)))))
+                                                                                     ;(println "*****section uid***** " (get section-children "O84zhInr1") " ---res---" res)))))
+
+                       2000)
+      (fn []
+        [:div {:class "left-sidebar-sections"}
+         (doall
+           (for [section-uid section-uids
+                 :let [section-settings (get-settings-for-section section-uid)
+                       children-atom (get section-children section-uid)
+                       s-children @children-atom]]
+             (if s-children
+               (let [children-list (r/atom (for [child s-children]
+                                             ^{:key (or (:block/uid child)
+                                                        (get child ":block/uid")
+                                                        (:uid child))}
+                                             [:div [section-child-item child section-settings]]))]
+                   [:div {:key section-uid}
+                    ;@children-list
+                    [section-component section-settings
+                     section-uid
+                     @children-list]])
+               ;[section-child-item child section-settings]))]
+               [:div {:key section-uid} "Loading..."])))])))
 
 
 (defn left-sidebar []
