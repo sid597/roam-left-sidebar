@@ -91,7 +91,7 @@
              (utils/truncate-str truncate-length))]
         (utils/truncate-str string truncate-length))]]))
 
-(defn section-component [{:keys [settings children section-uid]}]
+(defn section-component [settings section-uid children]
   (let [is-open?     (:open? settings)
         is-open-uid  (utils/get-child-of-child-under-block section-uid "Settings" (str "Open?: " @is-open?))
         collapsable? (:collapsable? settings)
@@ -105,7 +105,7 @@
         waiting? (r/atom false)
         click-count (r/atom 0)
         click-timeout (r/atom nil)]
-    (fn []
+    (fn [settings section-uid children]
       (println "open " is-open-uid "==="(str "Open?: " @is-open?))
       [:div {:class "collapsable-section"
              :style {:margin-bottom "15px"}}
@@ -204,21 +204,50 @@
         (get-children-for-section section-uid section-settings (fn [res]
                                                                  (println "section uid " section-uid " ---res---" res)
                                                                  (reset! children-atom res)))))
+
+    (js/setInterval (fn []
+                      #_(println "*****section uid***** ")
+                      (let [section-uid "O84zhInr1"
+                            section-settings (get-settings-for-section "O84zhInr1")]
+                        (get-children-for-section section-uid section-settings (fn [res]
+                                                                                 (reset! (get section-children "O84zhInr1") res)))))
+                                                                                 ;(println "*****section uid***** " (get section-children "O84zhInr1") " ---res---" res)))))
+
+                   2000)
     (fn []
       [:div {:class "left-sidebar-sections"}
        (doall
          (for [section-uid section-uids
                :let [section-settings (get-settings-for-section section-uid)
-                     children-atom (get section-children section-uid)]]
-           (if-let [section-children @children-atom]
-             ^{:key section-uid}
-             [section-component {:settings section-settings
-                                 :section-uid section-uid
-                                 :children (for [child section-children]
-                                             ^{:key (or (:block/uid child)
-                                                        (get child ":block/uid")
-                                                        (:uid child))}
-                                             [section-child-item child section-settings])}]
+                     children-atom (get section-children section-uid)
+                     s-children @children-atom]]
+           (if s-children
+             (let [children-list (r/atom (for [child s-children]
+                                           ^{:key (or (:block/uid child)
+                                                      (get child ":block/uid")
+                                                      (:uid child))}
+                                           [:div [section-child-item child section-settings]]))]
+                 [:div {:key section-uid}
+                  ;@children-list
+                  [section-component section-settings
+                   section-uid
+                   @children-list]])
+             ;[section-child-item child section-settings]))]
              [:div {:key section-uid} "Loading..."])))])))
+
+
+(defn left-sidebar []
+  (let [atoms {:a (r/atom "q")
+               :b (r/atom "gg")}
+        kw [:a :b]]
+    (js/setInterval (fn []
+                      (reset! (get atoms :a) (str "a" (rand-int 1000)))))
+    (fn []
+      [:<>
+       (doall
+         (for [k kw
+               :let [atom @(get atoms k)]]
+           [:div (str "hello" atom)]))])))
+
 
 (left-sidebar-sections)
