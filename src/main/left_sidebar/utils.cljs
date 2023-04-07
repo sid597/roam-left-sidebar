@@ -71,14 +71,14 @@
                      (str username "/left-sidebar/my-todos")))))
 
 (defn get-block-uid-for-block-on-page [block-text page-title]
-  (first (first (q '[:find (pull ?block-eid [:block/string :block/uid {:block/children ...}])
+  (ffirst (q '[:find (pull ?block-eid [:block/string :block/uid {:block/children ...}])
                      :in $ ?block-text ?page-title
                      :where
                      [?page-eid :node/title ?page-title]
                      [?page-eid :block/children ?block-eid]
                      [?block-eid :block/string ?block-text]
                      [?block-eid :block/uid ?block-uid]]
-                   block-text page-title))))
+                   block-text page-title)))
 (defn get-child-of-block-with-text-on-page [block-text page-title]
   (first (flatten (q '[:find ?child-uid
                        :in $ ?block-text ?page-title
@@ -103,24 +103,24 @@
 
 
 (defn get-child-block-with-text [parent-uid child-text]
-  (first (first (q '[:find (pull ?ce [:block/string :block/uid {:block/children ...}])
+  (ffirst (q '[:find (pull ?ce [:block/string :block/uid {:block/children ...}])
                      :in $ ?parent-uid ?child-text
                      :where
                      [?e :block/uid ?parent-uid]
                      [?e :block/children ?ce]
                      [?ce :block/string ?child-text]]
-                   parent-uid child-text))))
+                   parent-uid child-text)))
 
 (defn get-child-of-child-under-block [block-uid child-text child-child-text]
   (println "block-uid" block-uid "child-text" child-text "child-child-text" child-child-text)
-  (first (first (q '[:find (pull ?cce [:block/string :block/uid])
+  (ffirst (q '[:find (pull ?cce [:block/string :block/uid])
                      :in $ ?block-uid ?child-text ?child-child-text
                      :where [?e :block/uid ?block-uid]
                             [?e :block/children ?ce]
                             [?ce :block/string ?child-text]
                             [?ce :block/children ?cce]
                             [?cce :block/string ?child-child-text]]
-                   block-uid child-text child-child-text))))
+                   block-uid child-text child-child-text)))
 
 (get-child-of-child-under-block "O84zhInr1" "Settings" "Open?: True")
 
@@ -137,9 +137,9 @@
                    (str username "/left-sidebar")))))
 
 (defn get-children-for-eid [eid]
-  (first (first (q '[:find (pull ?e [:block/string :block/uid {:block/children ...}])
+  (ffirst (q '[:find (pull ?e [:block/string :block/uid {:block/children ...}])
                      :in $ ?e]
-                    eid))))
+                    eid)))
 ;(get-children-for-eid (first (get-left-sidebar-section-uids-for-current-user)))
 (get-left-sidebar-section-uids-for-current-user)
 
@@ -185,11 +185,11 @@
 (truncate-str "hello world" 53)
 
 (defn pull-children [uid]
-  (first (first (q '[:find (pull ?e [:block/string {:block/children ...}])
+  (ffirst (q '[:find (pull ?e [:block/string {:block/children ...}])
                      :in $ ?uid
                      :where
                      [?e :block/uid ?uid]]
-                   uid))))
+                   uid)))
 (defn custom-keyword [key]
   (println "+++" key)
   (if (.startsWith (str key) ":")
@@ -201,6 +201,72 @@
                  (str query-block))
       (.then (fn [res]
                (js->clj res :value-fn custom-keyword)))))
+
+
+(defn get-block-string [uid]
+  (ffirst (q '[:find ?string
+                     :in $ ?uid
+                     :where
+                     [?e :block/uid ?uid]
+                     [?e :block/string ?string]]
+                   uid)))
+
+
+(defn add-command-in-context-menu-for-section [section-uid ]
+  (let [section-title   (get-block-string section-uid)
+        child-block-uid (:uid (get-child-block-with-text section-uid "Children"))]
+    (println "section-title" section-title child-block-uid section-title)
+    (js/roamAlphaAPI.ui.blockContextMenu.addCommand
+      #js {:label (str "Add current block as ref to " section-title " children")
+           :display-conditional (fn [block-context] true) ;; You can modify this function to determine when the command should be displayed
+           :callback (fn [block-context]
+                       (cljs.pprint/pprint block-context)
+                       (let [block-context-clj (js->clj block-context :keywordize-keys true)
+                             block-to-add-uid   (:block-uid block-context-clj)
+
+                             title-of-page-to-add (ffirst (q '[:find ?page-title
+                                                                :in $ ?page-uid
+                                                                :where
+                                                                [?page-eid :block/uid ?page-uid]
+                                                                [?page-eid :block/string ?page-title]]
+                                                              block-to-add-uid))]
+                         (.createBlock (.-roamAlphaAPI js/window)
+                                       (clj->js {:location
+                                                 {:parent-uid child-block-uid
+                                                  :order "last"}
+                                                 :block {:string (str "((" block-to-add-uid "))") }}))
+                         #_(js/console.log "Command added in context menu!" block-context)))})))
+(defn get-current-page []
+     (-> (js/roamAlphaAPI.ui.mainWindow.getOpenPageOrBlockUid)
+         (.then (fn [uid]
+                  (println "current page uid"uid )
+                  (or {:page (ffirst (q '[:find ?page-title
+                                          :in $ ?page-uid
+                                          :where
+                                          [?page-eid :block/uid ?page-uid]
+                                          [?page-eid :node/title ?page-title]]
+                                       uid))
+                       :block-page uid})))))
+
+(defn add-command-to-command-pallet [section-uid]
+  (let [section-title (get-block-string section-uid)
+        child-block-uid (:uid (get-child-block-with-text section-uid "Children"))]
+    (js/roamAlphaAPI.ui.commandPalette.addCommand
+      #js {:label (str "Add current page as ref to " section-title " children")
+           :callback (fn []
+                       (println "child block uid" child-block-uid)
+                       (-> (get-current-page)
+                           (.then (fn [current-page]
+                                    (println "current page"  current-page)
+                                    (.createBlock (.-roamAlphaAPI js/window)
+                                                  (clj->js {:location
+                                                            {:parent-uid child-block-uid
+                                                             :order "last"}
+                                                            :block {:string (cond
+                                                                              (:page
+                                                                                current-page) (str "[[" (:page current-page) "]]")
+                                                                              :else           (str "((" (:block-page current-page) "))"))}}))))))})))
+
 
 (comment
 

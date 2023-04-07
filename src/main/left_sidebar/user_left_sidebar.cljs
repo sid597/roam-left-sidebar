@@ -30,13 +30,13 @@
 
 (defn get-children-from-sync-query [page-title todos]
   (println "4.---- sync query todos " page-title @todos)
-  (let [query-result-block-uid (first (first (utils/q '[:find ?block-uid
-                                                        :in $ ?page-title
-                                                        :where [?e :node/title ?page-title]
-                                                        [?e :block/children ?e-children]
-                                                        [?s-children :block/string "Reactive-query-results"]
-                                                        [?s-children :block/uid ?block-uid]]
-                                                      page-title)))
+  (let [query-result-block-uid (ffirst (utils/q '[:find ?block-uid
+                                                  :in $ ?page-title
+                                                  :where [?e :node/title ?page-title]
+                                                  [?e :block/children ?e-children]
+                                                  [?s-children :block/string "Reactive-query-results"]
+                                                  [?s-children :block/uid ?block-uid]]
+                                                page-title))
         callback               (fn [_ after]
                                  (let [input-str (aget after ":block/children" 0 ":block/string")
                                        stripped-str (subs input-str 6 (- (count input-str) 6))
@@ -63,17 +63,17 @@
                                                         page?  (second (re-find #"\[\[(.+)\]\]" raw-block-str))
                                                         block? (second (re-find #"\(\((.+)\)\)" raw-block-str))]
                                                       (cond page? {:block/string page?
-                                                                   :block/uid (first (first (utils/q '[:find ?block-uid
-                                                                                                       :in $ ?page-title
-                                                                                                       :where [?e :node/title ?page-title]
-                                                                                                       [?e :block/uid ?block-uid]]
-                                                                                                     (second (re-find #"\[\[(.+)\]\]" raw-block-str)))))}
+                                                                   :block/uid (ffirst (utils/q '[:find ?block-uid
+                                                                                                 :in $ ?page-title
+                                                                                                 :where [?e :node/title ?page-title]
+                                                                                                 [?e :block/uid ?block-uid]]
+                                                                                               (second (re-find #"\[\[(.+)\]\]" raw-block-str))))}
                                                             block? {:block/uid block?
-                                                                    :block/string (first (first (utils/q '[:find ?block-string
-                                                                                                           :in $ ?block-uid
-                                                                                                           :where [?e :block/uid ?block-uid]
-                                                                                                           [?e :block/string ?block-string]]
-                                                                                                         (second (re-find #"\(\((.+)\)\)" raw-block-str)))))})))
+                                                                    :block/string (ffirst (utils/q '[:find ?block-string
+                                                                                                     :in $ ?block-uid
+                                                                                                     :where [?e :block/uid ?block-uid]
+                                                                                                     [?e :block/string ?block-string]]
+                                                                                                   (second (re-find #"\(\((.+)\)\)" raw-block-str))))})))
 
 
                                              (utils/q '[:find ?s-children

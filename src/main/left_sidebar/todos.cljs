@@ -98,17 +98,17 @@
 
 
 (defn get-custom-query [query-block-uid]
-  (first (first (utils/q '[:find ?query-string
-                           :in $ ?query-block-uid
-                           :where
-                           [?e :block/uid ?query-block-uid]
-                           [?e :block/children ?scratch-child]
-                           [?scratch-child :block/string "scratch"]
-                           [?scratch-child :block/children ?custom-child]
-                           [?custom-child :block/string "custom"]
-                           [?custom-child :block/children ?query-child]
-                           [?query-child :block/string ?query-string]]
-                         query-block-uid))))
+  (ffirst (utils/q '[:find ?query-string
+                     :in $ ?query-block-uid
+                     :where
+                     [?e :block/uid ?query-block-uid]
+                     [?e :block/children ?scratch-child]
+                     [?scratch-child :block/string "scratch"]
+                     [?scratch-child :block/children ?custom-child]
+                     [?custom-child :block/string "custom"]
+                     [?custom-child :block/children ?query-child]
+                     [?query-child :block/string ?query-string]]
+                   query-block-uid)))
 
 (defn get-todos-from-query-block []
   (let [username          (utils/get-current-user)
