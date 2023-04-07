@@ -6,7 +6,6 @@
     [reagent.core :as r]))
 
 
-
 (defn transform-data [input-data]
   (let [children (get input-data :children)
         key-value-pairs (map (fn [child]
@@ -19,7 +18,11 @@
 (defn get-settings-for-section [section-uid]
   (let [settings-uid-data (utils/get-child-block-with-text section-uid "Settings")
         transformed-data (transform-data settings-uid-data)
-        actions-to-take  {:Actions (transform-data (utils/get-child-block-with-text (:uid settings-uid-data) "Actions"))}
+        actions-to-take  {:Actions (->> (utils/get-child-block-with-text (:uid settings-uid-data) "Actions")
+                                       (:children)
+                                       (mapv (fn [child]
+                                               (clojure.string/trim (:string child))))
+                                       (into #{}))}
         general-settings (transform-data (utils/get-block-uid-for-block-on-page
                                            "General settings"
                                            (str (utils/get-current-user) "/left-sidebar")))
@@ -45,12 +48,26 @@
                        {})
      :open?          (r/atom (utils/str-to-bool (:Open? all-settings)))}))
 
-(get-settings-for-section "eAbCXyZDp")
+(defn parse-str-for-refs [block-string]
+  (cond
+    (re-matches #"\(\(\s*([^)]+)\s*\)\)" block-string) {:uid (second (re-find #"\(\(\s*([^)]+)\s*\)\)" block-string))}
+    (re-matches #"\[\[\s*([^\]]+)\s*\]\]" block-string) {:page (second (re-find #"\[\[\s*([^\]]+)\s*\]\]" block-string))}
+    :else {:string block-string}))
 
 (defn section-child-item [block settings]
   (let [string (or(:string block) (get block ":block/string"))
-
-        uid    (or (:uid block)(get block ":block/uid"))
+        parsed-str (parse-str-for-refs string)
+        uid    (cond
+                 (get parsed-str :uid) (get parsed-str :uid)
+                 (get parsed-str :page) (ffirst (utils/q '[:find ?uid
+                                                           :in $ ?page
+                                                           :where [?e :node/title ?page]
+                                                           [?e :block/uid ?uid]]
+                                                         (get parsed-str :page)))
+                 :else (or (:uid block)(get block ":block/uid")))
+        render-str (cond (:uid parsed-str) (utils/get-block-string  (:uid parsed-str))
+                         (:page parsed-str) (:page parsed-str)
+                         :else string)
         todo-block? (utils/is-todo-block? string)
         truncate-length (:truncate? settings)]
 
@@ -80,12 +97,12 @@
                   :on-click #(.updateBlock (.-roamAlphaAPI js/window)
                                            (clj->js {:block
                                                      {:uid uid
-                                                      :string (str/replace string "{{[[TODO]]}}" "{{[[DONE]]}}")}}))}]
+                                                      :string (str/replace render-str"{{[[TODO]]}}" "{{[[DONE]]}}")}}))}]
 
-         (-> string
+         (-> render-str
              (str/replace "{{[[TODO]]}}" " ")
              (utils/truncate-str truncate-length))]
-        (utils/truncate-str string truncate-length))]]))
+        (utils/truncate-str render-str truncate-length))]]))
 
 (defn section-component [settings section-uid children]
   (let [is-open?     (:open? settings)
@@ -166,7 +183,6 @@
           (take (:show settings) children)]
          (take (:show settings) children))])))
 
-
 (defn get-children-for-section [section-uid section-settings callback]
   (let [type (:type section-settings)
         child-block (utils/get-child-block-with-text section-uid
@@ -198,23 +214,43 @@
                   rt)))))
         section-uids))
 
+(defn create-action-fns [section-uids]
+  (keep (fn [section-uid]
+          (let [section-settings (get-settings-for-section section-uid)
+                actions (:actions section-settings)]
+            (fn []
+              (when (and actions
+                         (not= (:type section-settings) "query"))
+               (do
+                 (when (get actions "command pallet")
+                   (utils/add-command-to-command-pallet section-uid))
+                 (when (get actions "context menu")
+                   (utils/add-command-in-context-menu-for-section section-uid)))))))
+        section-uids))
+
+(defn load-section-children [section-uids section-children]
+  (doseq [section-uid section-uids]
+    (let [section-settings (get-settings-for-section section-uid)
+          children-atom (get section-children section-uid)]
+      (get-children-for-section section-uid section-settings (fn [res]
+                                                               (reset! children-atom res))))))
 
 (defn left-sidebar-sections []
   (let [section-uids (utils/get-left-sidebar-section-uids-for-current-user)
         section-children (->> section-uids
                               (map (fn [uid] [uid (r/atom nil)]))
                               (into {}))]
-    (doseq [section-uid section-uids]
-      (let [section-settings (get-settings-for-section section-uid)
-            children-atom (get section-children section-uid)]
-        (get-children-for-section section-uid section-settings (fn [res]
-                                                                 (println "section uid " section-uid " ---res---" res)
-                                                                 (reset! children-atom res)))))
+    (load-section-children section-uids section-children)
+
     (let [processed-fns (process-section-uids section-uids section-children)]
       (doseq [f processed-fns]
         (f)))
-    (utils/add-command-in-context-menu-for-section "en6IBo3by")
-    (utils/add-command-to-command-pallet "en6IBo3by")
+
+    (let [action-fns (create-action-fns section-uids)]
+      (cljs.pprint/pprint action-fns)
+      (doseq [f action-fns]
+        (f)))
+
     (fn []
       [:div {:class "left-sidebar-sections"}
        (doall

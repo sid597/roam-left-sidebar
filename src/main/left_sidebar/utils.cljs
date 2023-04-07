@@ -101,15 +101,19 @@
   (let [first-word (first (clojure.string/split s #"\s+"))]
     (= first-word "{{[[TODO]]}}")))
 
-
 (defn get-child-block-with-text [parent-uid child-text]
-  (ffirst (q '[:find (pull ?ce [:block/string :block/uid {:block/children ...}])
-                     :in $ ?parent-uid ?child-text
-                     :where
-                     [?e :block/uid ?parent-uid]
-                     [?e :block/children ?ce]
-                     [?ce :block/string ?child-text]]
-                   parent-uid child-text)))
+  (let [result (ffirst (q '[:find (pull ?ce [:block/string :block/uid {:block/children [:block/uid :block/order :block/string]}])
+                            :in $ ?parent-uid ?child-text
+                            :where
+                            [?e :block/uid ?parent-uid]
+                            [?e :block/children ?ce]
+                            [?ce :block/string ?child-text]]
+                          parent-uid child-text))]
+    (if result
+      (assoc result :children (sort-by :order (:children result)))
+      nil)))
+(get-child-block-with-text "en6IBo3by" "Children")
+
 
 (defn get-child-of-child-under-block [block-uid child-text child-child-text]
   (println "block-uid" block-uid "child-text" child-text "child-child-text" child-child-text)
@@ -126,15 +130,18 @@
 
 (defn get-left-sidebar-section-uids-for-current-user []
   (let [username (get-current-user)]
-    (mapv first (q '[:find ?section-uid
-                     :in $ ?user-left-sidebar
-                     :where
-                     [?eid :node/title ?user-left-sidebar]
-                     [?eid :block/children ?section-eid]
-                     [?section-eid :block/string "Sections"]
-                     [?section-eid :block/children ?section-children-eid]
-                     [?section-children-eid :block/uid ?section-uid]]
-                   (str username "/left-sidebar")))))
+    (->> (q '[:find ?section-uid ?order
+              :in $ ?user-left-sidebar
+              :where
+              [?eid :node/title ?user-left-sidebar]
+              [?eid :block/children ?section-eid]
+              [?section-eid :block/string "Sections"]
+              [?section-eid :block/children ?section-children-eid]
+              [?section-children-eid :block/uid ?section-uid]
+              [?section-children-eid :block/order ?order]]
+            (str username "/left-sidebar"))
+         (sort-by second)
+         (mapv first))))
 
 (defn get-children-for-eid [eid]
   (ffirst (q '[:find (pull ?e [:block/string :block/uid {:block/children ...}])
