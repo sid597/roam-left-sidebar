@@ -1,7 +1,7 @@
-(ns left-sidebar.user-left-sidebar
+(ns left-sidebar.namespaced-protocol.user-left-sidebar
   (:require
     [cljs.tools.reader.edn :as reader]
-    [left-sidebar.collapsable :as collapsable]
+    [left-sidebar.namespaced-protocol.collapsable :as collapsable]
     [left-sidebar.utils :as utils]
     [clojure.string :as str]
     [reagent.dom :as rd]

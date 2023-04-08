@@ -1,5 +1,6 @@
-(ns left-sidebar.global-left-sidebar
+(ns left-sidebar.single-page-protocol.global-left-sidebar
   (:require [left-sidebar.utils :as utils]))
+
 
 
 (defn get-global-left-sidebar-list []

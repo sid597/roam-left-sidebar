@@ -1,7 +1,7 @@
-(ns left-sidebar.todos
+(ns left-sidebar.namespaced-protocol.todos
   (:require [left-sidebar.utils :as utils]
             [clojure.string :as str]
-            [left-sidebar.user-left-sidebar :as user-left-sidebar]
+            [left-sidebar.namespaced-protocol.user-left-sidebar :as user-left-sidebar]
             [clojure.edn :as edn]
             ["@blueprintjs/core" :refer [Collapse Icon]]
             [reagent.core :as r]))

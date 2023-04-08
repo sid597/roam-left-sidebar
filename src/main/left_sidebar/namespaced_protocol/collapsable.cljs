@@ -1,4 +1,4 @@
-(ns left-sidebar.collapsable
+(ns left-sidebar.namespaced-protocol.collapsable
   (:require [reagent.core :as r]
             ["@blueprintjs/core" :refer [Collapse Icon]]))
 

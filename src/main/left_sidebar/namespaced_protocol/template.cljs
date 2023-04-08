@@ -1,4 +1,4 @@
-(ns left-sidebar.template)
+(ns left-sidebar.namespaced-protocol.template)
 
 
 (comment

@@ -4,20 +4,16 @@
     [reagent.core :as r]
     [reagent.dom :as rd]
     [left-sidebar.utils :as utils]
-    [left-sidebar.global-shortcuts :as global-shortcuts]
-    [left-sidebar.personal-shortcuts :as personal-shortcuts]
-    [left-sidebar.single-page-protocol.core :as single-page-protocol]
-    [left-sidebar.user-left-sidebar :as user-left-sidebar]
-    [left-sidebar.collapsable :as collapsable]
-    [left-sidebar.todos :as todos]))
+    [left-sidebar.namespaced-protocol.personal-shortcuts :as personal-shortcuts]
+    [left-sidebar.single-page-protocol.core :as single-page-protocol]))
 
 
 (defn start []
   (let [sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
-        todo-container     (js/document.createElement "div")]
+        todo-container     (js/document.createElement "div")
+        starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))]
     (.setAttribute todo-container "class" "todos-sidebar-container")
-    (personal-shortcuts/add-personal-shortcut-command-in-menu)
-    (personal-shortcuts/create-personal-shortcuts-page)
+    (personal-shortcuts/create-left-sidebar-page)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
       (rd/render  [:div
