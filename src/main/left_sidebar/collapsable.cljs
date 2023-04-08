@@ -6,7 +6,7 @@
   (let [is-open (r/atom true)]
     (fn []
       [:div {:class "collapsable-section"
-             :style {:margin-bottom "15px"}}
+             :style {:margin-bottom "10px"}}
        [:button {:on-click #(reset! is-open (not @is-open))
                  :style {:display "flex"
                          :align-items "center"

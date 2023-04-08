@@ -21,7 +21,7 @@
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
       (rd/render  [:div
-                         {:class "collapsable-component-container"
+                         {:class "starred-pages "
                           :style {:overflow "scroll"
                                   :padding "15px"}}
                          [:style

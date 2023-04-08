@@ -81,11 +81,8 @@
                                                                                                            "block-uid" (str uid)}})))))}
      [:div {:class (str "section-child-item " uid)
             :style {:padding "4px 0 4px 4px"
-                    :color "hsl(204,20%,45%)"
-                    :font-family "Inter"
+                    :color "#495057"
                     :line-height "1.5"
-                    :font-size "15px"
-                    :font-weight "500"
                     :border-radius "3px"}}
       (if todo-block?
         [:<>
@@ -114,13 +111,24 @@
                                          [?section-eid :block/uid ?section-uid]
                                          [?section-eid :block/string ?title]]
                                        section-uid))
+        parsed-title (parse-str-for-refs section-title)
+        render-str (cond (:uid parsed-title) (utils/get-block-string  (:uid parsed-title))
+                         (:page parsed-title) (:page parsed-title)
+                         :else section-title)
+        uid    (cond
+                (get parsed-title :uid) (get parsed-title :uid)
+                (get parsed-title :page) (ffirst (utils/q '[:find ?uid
+                                                            :in $ ?page
+                                                            :where [?e :node/title ?page]
+                                                            [?e :block/uid ?uid]]
+                                                          (get parsed-title :page)))
+                :else section-uid)
         waiting? (r/atom false)
         click-count (r/atom 0)
         click-timeout (r/atom nil)]
     (fn [settings section-uid children]
-      [:div {:class "collapsable-section"
-             :style {:margin-bottom "15px"}}
-       [:div {:class "but"
+      [:div {:class "collapsable-section"}
+       [:div {:class "sidebar-title-button"
               :on-click (fn []
                           (swap! click-count inc)
                           (reset! waiting? true)
@@ -145,7 +153,7 @@
                                             (println "double click")
                                             (-> (.openBlock (.-mainWindow (.-ui (.-roamAlphaAPI js/window)))
                                                             (clj->js {:block
-                                                                      {:uid section-uid}}))
+                                                                      {:uid uid}}))
                                                 (.then (println "double clicked left sidebar section")))))
                                         (reset! click-count 0)
                                         (reset! waiting? false)))
@@ -157,7 +165,6 @@
                        :background "transparent"
                        :border "none"
                        :cursor "pointer"
-                       :color "#CED9E0"
                        :font-size "14px"
                        :font-weight "600"
                        :padding "4px 0"
@@ -169,7 +176,7 @@
                        :align-items "center"
                        :justify-content "space-between"
                        :width "100%"}}
-         [:span section-title]
+         [:span render-str]
          (when (and collapsable?
                     (not-empty children))
           [:span (if @is-open? [:> Icon {:icon "chevron-down"}]
