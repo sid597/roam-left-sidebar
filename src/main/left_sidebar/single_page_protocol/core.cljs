@@ -18,11 +18,7 @@
 (defn get-settings-for-section [section-uid]
   (let [settings-uid-data (utils/get-child-block-with-text section-uid "Settings")
         transformed-data (transform-data settings-uid-data)
-        actions-to-take  {:Actions (->> (utils/get-child-block-with-text (:uid settings-uid-data) "Actions")
-                                       (:children)
-                                       (mapv (fn [child]
-                                               (clojure.string/trim (:string child))))
-                                       (into #{}))}
+        actions-to-take {:Actions (transform-data (utils/get-child-block-with-text (:uid settings-uid-data) "Actions"))}
         general-settings (transform-data (utils/get-block-uid-for-block-on-page
                                            "General settings"
                                            (str (utils/get-current-user) "/left-sidebar")))
@@ -224,15 +220,18 @@
 (defn create-action-fns [section-uids]
   (keep (fn [section-uid]
           (let [section-settings (get-settings-for-section section-uid)
-                actions (:actions section-settings)]
+                actions (:actions section-settings)
+                cmd-pallet (:command-pallet actions)
+                context-menu (:context-menu actions)]
+
             (fn []
-              (when (and actions
+              (when (and (not-empty actions)
                          (not= (:type section-settings) "query"))
                (do
-                 (when (get actions "command pallet")
-                   (utils/add-command-to-command-pallet section-uid))
-                 (when (get actions "context menu")
-                   (utils/add-command-in-context-menu-for-section section-uid)))))))
+                 (when cmd-pallet
+                   (utils/add-command-to-command-pallet section-uid cmd-pallet))
+                 (when context-menu
+                   (utils/add-command-in-context-menu-for-section section-uid context-menu)))))))
         section-uids))
 
 (defn load-section-children [section-uids section-children]

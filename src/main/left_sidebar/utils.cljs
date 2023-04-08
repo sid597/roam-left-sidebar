@@ -219,12 +219,12 @@
                    uid)))
 
 
-(defn add-command-in-context-menu-for-section [section-uid ]
+(defn add-command-in-context-menu-for-section [section-uid label]
   (let [section-title   (get-block-string section-uid)
         child-block-uid (:uid (get-child-block-with-text section-uid "Children"))]
     (println "section-title" section-title child-block-uid section-title)
     (js/roamAlphaAPI.ui.blockContextMenu.addCommand
-      #js {:label (str "Add current block as ref to " section-title " children")
+      #js {:label label
            :display-conditional (fn [block-context] true) ;; You can modify this function to determine when the command should be displayed
            :callback (fn [block-context]
                        (cljs.pprint/pprint block-context)
@@ -255,11 +255,11 @@
                                        uid))
                        :block-page uid})))))
 
-(defn add-command-to-command-pallet [section-uid]
+(defn add-command-to-command-pallet [section-uid label]
   (let [section-title (get-block-string section-uid)
         child-block-uid (:uid (get-child-block-with-text section-uid "Children"))]
     (js/roamAlphaAPI.ui.commandPalette.addCommand
-      #js {:label (str "Add current page as ref to " section-title " children")
+      #js {:label label
            :callback (fn []
                        (println "child block uid" child-block-uid)
                        (-> (get-current-page)
