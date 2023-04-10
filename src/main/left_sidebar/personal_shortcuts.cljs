@@ -1,18 +1,18 @@
-(ns left-sidebar.namespaced-protocol.personal-shortcuts
+(ns left-sidebar.personal-shortcuts
   (:require [left-sidebar.utils :as utils]
             ["@blueprintjs/core" :refer [Collapse Icon]]))
 
 
-(defn create-left-sidebar-page []
+(defn create-personal-shortcuts-page []
   (let [username               (utils/get-current-user)
         personal-shortcuts-uid (utils/get-personal-shortcut-page-uid username)]
        (when-not personal-shortcuts-uid
          (-> (.createPage (.-roamAlphaAPI js/window)
                           (clj->js {:page
-                                    {:title (str username "/left-sidebar")}}))
+                                    {:title (str username "/left-sidebar/personal-shortcuts")}}))
              (.then (fn []
                       (let [new-shortcut-page-uid (utils/get-personal-shortcut-page-uid username)]
-                        (js/console.log "Left sidebar page created" new-shortcut-page-uid)
+                        (js/console.log "Personal shortcuts page created" new-shortcut-page-uid)
                         (-> (.createBlock (.-roamAlphaAPI js/window)
                                           (clj->js {:block
                                                      {:string ""}

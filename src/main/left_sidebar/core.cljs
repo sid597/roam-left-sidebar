@@ -1,27 +1,31 @@
 (ns left-sidebar.core
-  (:require
-    [clojure.edn :as edn]
-    [reagent.core :as r]
-    [reagent.dom :as rd]
-    [left-sidebar.utils :as utils]
-    [left-sidebar.namespaced-protocol.personal-shortcuts :as personal-shortcuts]
-    [left-sidebar.single-page-protocol.core :as single-page-protocol]))
+  (:require [reagent.core :as r]
+            [reagent.dom :as rd]
+            [left-sidebar.utils :as utils]
+            [left-sidebar.global-shortcuts :as global-shortcuts]
+            [left-sidebar.personal-shortcuts :as personal-shortcuts]
+            [left-sidebar.collapsable :as collapsable]
+            [left-sidebar.todos :as todos]))
 
 
 (defn start []
-  (let [sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
+  (let [user               (utils/get-current-user)
+        sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
         todo-container     (js/document.createElement "div")
+        todos-list         (r/atom (todos/get-todos-for-user user))
+        personal-shortcuts (r/atom (personal-shortcuts/get-personal-shortcuts-for-user user))
         starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))]
     (.setAttribute todo-container "class" "todos-sidebar-container")
-    (personal-shortcuts/create-left-sidebar-page)
+    (personal-shortcuts/add-personal-shortcut-command-in-menu)
+    (personal-shortcuts/create-personal-shortcuts-page)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
-      (rd/render  [:div
-                         {:class "starred-pages "
-                          :style {:overflow "scroll"
-                                  :padding "15px"}}
-                         [:style
-                          (str ".personal-shortcut-item:hover{
+      (rd/render [:div
+                  {:class "collapsable-component-container"
+                   :style {:overflow "scroll"
+                           :padding "15px"}}
+                  [:style
+                   (str ".personal-shortcut-item:hover{
                               color: #F5F8FA !important;
                               background-color: #10161A;
                               }
@@ -33,8 +37,20 @@
                               color: #F5F8FA !important;
                               background-color: #10161A;
                               }")]
-                   [single-page-protocol/left-sidebar-sections]]
-                 sidebar-container))))
+                  [collapsable/collapsable-section "Global Shortcuts" "globe"
+                   [global-shortcuts/starred-pages-component starred-pages-html]]
+                  [collapsable/collapsable-section "Personal Shortcuts" "person"
+                    [personal-shortcuts/personal-shortcuts-component personal-shortcuts]]
+                  [collapsable/collapsable-section "My Todos" "tick"
+                   [todos/todos-component todos-list]]]
+
+                 sidebar-container)
+      ;; This is a hack to get the todos to update, we can use
+      ;; mutation observers to do this better but it also complicates
+      ;; things.
+      (js/setInterval (fn []
+                          (reset! todos-list (todos/get-todos-for-user user))
+                          (reset! personal-shortcuts (personal-shortcuts/get-personal-shortcuts-for-user user))) 1000))))
 
 (defn stop []
   (let [sidebar-container (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
@@ -43,8 +59,6 @@
       (rd/unmount-component-at-node todos-sidebar-container)
       (.removeChild sidebar-container todos-sidebar-container))))
 
-
 (defn init []
   (println "Hello from left-sidebar plugin!")
-  ;(pw)
- (start))
+  (start))

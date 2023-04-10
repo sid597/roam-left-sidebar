@@ -1,12 +1,12 @@
-(ns left-sidebar.namespaced-protocol.collapsable
+(ns left-sidebar.collapsable
   (:require [reagent.core :as r]
             ["@blueprintjs/core" :refer [Collapse Icon]]))
 
-(defn collapsable-section [title children]
+(defn collapsable-section [title icon children]
   (let [is-open (r/atom true)]
     (fn []
       [:div {:class "collapsable-section"
-             :style {:margin-bottom "10px"}}
+             :style {:margin-bottom "15px"}}
        [:button {:on-click #(reset! is-open (not @is-open))
                  :style {:display "flex"
                          :align-items "center"
@@ -20,7 +20,9 @@
                          :width "100%"
                          :outline "none"
                          :transition "color 0.2s ease-in"}}
-
+        [:> Icon {:icon icon
+                  :size "12px"
+                  :style {:margin-right "4px"}}]
         [:div {::style {:display "flex"
                         :align-items "center"
                         :justify-content "space-between"
