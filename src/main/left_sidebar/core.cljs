@@ -16,6 +16,7 @@
         global-sections   (utils/get-global-left-sidebar-uids)]
     (.setAttribute todo-container "class" "todos-sidebar-container")
     (personal-shortcuts/create-left-sidebar-page)
+    (println "global sections" global-sections)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
       (rd/render  [:div

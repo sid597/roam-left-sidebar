@@ -45,6 +45,7 @@
      :open?          (r/atom (utils/str-to-bool (:Open? all-settings)))}))
 
 (defn parse-str-for-refs [block-string]
+  (println "parse str for refs" block-string)
   (cond
     (re-matches #"\(\(\s*([^)]+)\s*\)\)" block-string) {:uid (second (re-find #"\(\(\s*([^)]+)\s*\)\)" block-string))}
     (re-matches #"\[\[\s*([^\]]+)\s*\]\]" block-string) {:page (second (re-find #"\[\[\s*([^\]]+)\s*\]\]" block-string))}
@@ -70,6 +71,9 @@
                          :else string)
         todo-block? (utils/is-todo-block? string)
         truncate-length (:truncate? settings)]
+    (println "section child item" block)
+    (println "section child str" string)
+    (println "section child uid" uid)
 
     [:a {:href (str "/#/app/" (utils/get-graph-name) "/page/" uid)
          :style {:text-decoration "none"}
