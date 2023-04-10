@@ -11,7 +11,9 @@
 (defn start []
   (let [sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
         todo-container     (js/document.createElement "div")
-        starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))]
+        starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))
+        user-section-uids (utils/get-left-sidebar-section-uids-for-current-user)
+        global-sections   (utils/get-global-left-sidebar-uids)]
     (.setAttribute todo-container "class" "todos-sidebar-container")
     (personal-shortcuts/create-left-sidebar-page)
     (when sidebar-container
@@ -33,7 +35,8 @@
                               color: #F5F8FA !important;
                               background-color: #10161A;
                               }")]
-                   [single-page-protocol/left-sidebar-sections]]
+                   [single-page-protocol/left-sidebar-sections global-sections]
+                   [single-page-protocol/left-sidebar-sections user-section-uids]]
                  sidebar-container))))
 
 (defn stop []

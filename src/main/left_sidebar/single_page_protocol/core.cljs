@@ -51,7 +51,9 @@
     :else {:string block-string}))
 
 (defn section-child-item [block settings]
-  (let [string (or(:string block) (get block ":block/string"))
+  (let [string (or(:string block)
+                  (get block ":block/string")
+                  (get block "text"))
         parsed-str (parse-str-for-refs string)
         uid    (cond
                  (get parsed-str :uid) (get parsed-str :uid)
@@ -60,7 +62,9 @@
                                                            :where [?e :node/title ?page]
                                                            [?e :block/uid ?uid]]
                                                          (get parsed-str :page)))
-                 :else (or (:uid block)(get block ":block/uid")))
+                 :else (or (:uid block)
+                           (get block ":block/uid")
+                           (get block "uid")))
         render-str (cond (:uid parsed-str) (utils/get-block-string  (:uid parsed-str))
                          (:page parsed-str) (:page parsed-str)
                          :else string)
@@ -241,9 +245,8 @@
       (get-children-for-section section-uid section-settings (fn [res]
                                                                (reset! children-atom res))))))
 
-(defn left-sidebar-sections []
-  (let [section-uids (utils/get-left-sidebar-section-uids-for-current-user)
-        section-children (->> section-uids
+(defn left-sidebar-sections [section-uids]
+  (let [section-children (->> section-uids
                               (map (fn [uid] [uid (r/atom nil)]))
                               (into {}))]
     (load-section-children section-uids section-children)
@@ -268,7 +271,8 @@
              (let [children-list (r/atom (for [child s-children]
                                            ^{:key (or (:block/uid child)
                                                       (get child ":block/uid")
-                                                      (:uid child))}
+                                                      (:uid child)
+                                                      (get child "uid"))}
                                            [:div [section-child-item child section-settings]]))]
                [:div {:key section-uid}
                 ;@children-list
@@ -277,5 +281,3 @@
                  @children-list]])
              ;[section-child-item child section-settings]))]
              [:div {:key section-uid} "Loading..."])))])))
-
-(left-sidebar-sections)

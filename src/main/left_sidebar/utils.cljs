@@ -54,13 +54,13 @@
     (nth url-parts 5)))
 
 
-(defn get-personal-shortcut-page-uid [username]
+(defn get-personal-left-sidebar-page-uid [username]
   (first (flatten (q '[:find ?page-uid
                        :in $ ?username
                        :where
                        [?eid :node/title ?username]
                        [?eid :block/uid ?page-uid]]
-                     (str username "/left-sidebar/personal-shortcuts")))))
+                     (str username "/left-sidebar")))))
 
 (defn get-my-todos-page-uid [username]
   (first (flatten (q '[:find ?page-uid
@@ -274,6 +274,20 @@
                                                                                 current-page) (str "[[" (:page current-page) "]]")
                                                                               :else           (str "((" (:block-page current-page) "))"))}}))))))})))
 
+
+(defn get-global-left-sidebar-uids []
+  (->> (q '[:find ?section-uid ?order
+            :in $ ?user-left-sidebar
+            :where
+            [?eid :node/title ?user-left-sidebar]
+            [?eid :block/children ?section-eid]
+            [?section-eid :block/string "Global sections"]
+            [?section-eid :block/children ?section-children-eid]
+            [?section-children-eid :block/uid ?section-uid]
+            [?section-children-eid :block/order ?order]]
+          "roam/left-sidebar")
+       (sort-by second)
+       (mapv first)))
 
 (comment
 
