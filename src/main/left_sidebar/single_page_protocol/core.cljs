@@ -15,6 +15,16 @@
 
     (into {} key-value-pairs)))
 
+(defn default-config []
+  {:Re-organisable? "false"
+   :Actions {}
+   :Refresh-every "0"
+   :Open? "false"
+   :Show "5"
+   :Type "blocks-and-pages"
+   :Collapsable? "true"
+   :Truncate-result? "75"})
+
 (defn get-settings-for-section [section-uid]
   (let [settings-uid-data (utils/get-child-block-with-text section-uid "Settings")
         transformed-data (transform-data settings-uid-data)
@@ -23,25 +33,20 @@
                                            "General settings"
                                            (str (utils/get-current-user) "/left-sidebar")))
         section-settings (merge transformed-data actions-to-take)
-        all-settings     (merge general-settings section-settings)]
-    {:type           (or (:Type all-settings)
-                         "blocks-and-pages")
-     :show           (or (when (:Show all-settings)
-                           (or (utils/str-to-num (:Show all-settings))
-                               1000))
-                         5)
-     :truncate?      (or (when (:Truncate-result? all-settings)
-                           (or (utils/str-to-num (:Truncate-result? all-settings))
-                               1000))
-                         75)
-     :refresh-time   (or (utils/get-milliseconds-from (:Refresh-every all-settings))
-                         0)
+        all-settings     (merge (default-config) general-settings section-settings)]
+    {:type           (:Type all-settings)
+     :show           (when (:Show all-settings)
+                       (or (utils/str-to-num (:Show all-settings))
+                           1000))
+     :truncate?      (when (:Truncate-result? all-settings)
+                          (or (utils/str-to-num (:Truncate-result? all-settings))
+                              1000))
+     :refresh-time   (utils/get-milliseconds-from (:Refresh-every all-settings))
      :re-organisable? (utils/str-to-bool (:Re-organisable? all-settings))
 
      :collapsable?     (utils/str-to-bool (:Collapsable? all-settings))
 
-     :actions        (or (:Actions all-settings)
-                       {})
+     :actions        (:Actions all-settings)
      :open?          (r/atom (utils/str-to-bool (:Open? all-settings)))}))
 
 (defn parse-str-for-refs [block-string]
@@ -71,10 +76,6 @@
                          :else string)
         todo-block? (utils/is-todo-block? string)
         truncate-length (:truncate? settings)]
-    (println "section child item" block)
-    (println "section child str" string)
-    (println "section child uid" uid)
-
     [:a {:href (str "/#/app/" (utils/get-graph-name) "/page/" uid)
          :style {:text-decoration "none"}
          :on-click (fn [event]
@@ -133,7 +134,12 @@
     (fn [settings section-uid children]
       [:div {:class "collapsable-section"}
        [:div {:class "sidebar-title-button"
-              :on-click (fn []
+              :on-click (fn [e]
+                          (when (.-shiftKey e)
+                            (do
+                              (.preventDefault e)
+                              (.addWindow (.-rightSidebar (.-ui (.-roamAlphaAPI js/window))) (clj->js {:window {:type "outline"
+                                                                                                                "block-uid" (str uid)}}))))
                           (swap! click-count inc)
                           (reset! waiting? true)
                           (when @click-timeout

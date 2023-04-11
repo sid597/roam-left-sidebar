@@ -130,6 +130,7 @@
 
 (defn get-left-sidebar-section-uids-for-current-user []
   (let [username (get-current-user)]
+    (println "username for user is" username)
     (->> (q '[:find ?section-uid ?order
               :in $ ?user-left-sidebar
               :where
