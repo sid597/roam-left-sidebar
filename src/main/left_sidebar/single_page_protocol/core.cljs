@@ -53,7 +53,7 @@
   (println "parse str for refs" block-string)
   (cond
     (re-matches #"\(\(\s*([^)]+)\s*\)\)" block-string) {:uid (second (re-find #"\(\(\s*([^)]+)\s*\)\)" block-string))}
-    (re-matches #"\[\[\s*([^\]]+)\s*\]\]" block-string) {:page (second (re-find #"\[\[\s*([^\]]+)\s*\]\]" block-string))}
+    (re-matches #"\[\[(.*)\]\]" block-string) {:page (second (re-find #"\[\[(.*)\]\]" block-string))}
     :else {:string block-string}))
 
 (defn section-child-item [block settings]
