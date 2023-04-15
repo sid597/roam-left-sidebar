@@ -201,11 +201,13 @@
          (take (:show settings) children))])))
 
 (defn get-children-for-section [section-uid section-settings callback]
+  (println "get-children-for-section" section-uid section-settings)
   (let [type (:type section-settings)
         child-block (utils/get-child-block-with-text section-uid
                                                      (if (= "query" type)
                                                        "Query block"
                                                        "Children"))]
+    (println "child block for section" section-uid child-block)
     (cond (= "query" type)
           (do
             (-> (utils/query-builder-run-query (-> child-block

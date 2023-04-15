@@ -205,9 +205,11 @@
     (keyword key)))
 
 (defn query-builder-run-query [query-block]
+  (println "query block to run query" query-block)
   (-> (.runQuery (.-queryBuilder (.-extension (.-roamjs js/window)))
                  (str query-block))
       (.then (fn [res]
+               (println "result from query block" query-block "-- Res --" res)
                (js->clj res :value-fn custom-keyword)))))
 
 
