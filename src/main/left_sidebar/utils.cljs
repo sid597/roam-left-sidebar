@@ -193,7 +193,7 @@
 (truncate-str "hello world" 53)
 
 (defn pull-children [uid]
-  (ffirst (q '[:find (pull ?e [:block/string {:block/children ...}])
+  (ffirst (q '[:find (pull ?e [:block/string :block/uid {:block/children [:block/string :block/uid :block/order]}])
                      :in $ ?uid
                      :where
                      [?e :block/uid ?uid]]
@@ -290,6 +290,54 @@
           "roam/left-sidebar")
        (sort-by second)
        (mapv first)))
+
+(defn create-block [location-data]
+  (.createBlock (.-roamAlphaAPI js/window) (clj->js location-data)))
+
+(defn create-blocks-from-section [parent-block block]
+  (let [block-uid (:uid block)
+        with-children (:children block)
+        new-section-uid (.generateUID (.-util (.-roamAlphaAPI js/window)))
+        children-block-uid (.generateUID (.-util (.-roamAlphaAPI js/window)))
+        settings-uid (.generateUID (.-util (.-roamAlphaAPI js/window)))
+        settings ["Type: blocks-and-pages" "Show: 5" "Collapsable?: true" "Open?: true" "Actions:"]]
+    (println "LS: new section uid" new-section-uid "children block uid" children-block-uid "block uid" block-uid)
+    (-> (create-block {:location {:parent-uid parent-block :order "last"}
+                       :block {:string (str "((" block-uid "))") :uid new-section-uid}})
+        (.then (fn []
+                 (create-block {:location {:parent-uid new-section-uid :order "last"}
+                                :block {:string "Settings" :uid settings-uid}})))
+        (.then (fn []
+                 (create-block {:location {:parent-uid new-section-uid :order "last"}
+                                :block {:string "Children" :uid children-block-uid}})))
+        (.then (fn []
+                 (doseq [setting settings]
+                   (create-block {:location {:parent-uid settings-uid :order "last"}
+                                  :block {:string setting}}))
+                 (let [children-blocks (map (fn [child-block]
+                                              (let [child-uid (get child-block :uid)]
+                                                {:location {:parent-uid children-block-uid :order "last"}
+                                                 :block {:string (str "((" child-uid "))")}}))
+                                            with-children)]
+                   (doseq [child-block children-blocks]
+                     (create-block child-block))))))))
+
+(defn add-section-command-to-context-menu []
+  (let [username (get-current-user)
+        section-uid (:uid (get-block-uid-for-block-on-page "Sections" (str username "/left-sidebar")))
+        label "Add the current block as a section"]
+    (println "LS:Add section command section uid" section-uid)
+    (cljs.pprint/pprint  section-uid)
+    (js/roamAlphaAPI.ui.blockContextMenu.addCommand
+      #js {:label label
+           :display-conditional (fn [block-context] true) ;; You can modify this function to determine when the command should be displayed
+           :callback (fn [block-context]
+                       (println "command added to context menu")
+                       (let [block-context-clj (js->clj block-context :keywordize-keys true)
+                             block-to-add-uid   (:block-uid block-context-clj)
+                             block-data         (pull-children block-to-add-uid)]
+                         (create-blocks-from-section section-uid block-data)))})))
+
 
 (comment
 
