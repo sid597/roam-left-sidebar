@@ -92,7 +92,7 @@
 
 (defn get-page-name-from-ref [list-of-pages]
   (remove nil? (map (fn [s]
-                      (println s)
+                      (println "LS: get page name from string" s)
                       (second (re-find #"\[\[(.+)\]\]" s)))
                     list-of-pages)))
 
@@ -116,7 +116,7 @@
 
 
 (defn get-child-of-child-under-block [block-uid child-text child-child-text]
-  (println "block-uid" block-uid "child-text" child-text "child-child-text" child-child-text)
+  (println "LS: block-uid" block-uid "child-text" child-text "child-child-text" child-child-text)
   (ffirst (q '[:find (pull ?cce [:block/string :block/uid])
                      :in $ ?block-uid ?child-text ?child-child-text
                      :where [?e :block/uid ?block-uid]
@@ -130,7 +130,7 @@
 
 (defn get-left-sidebar-section-uids-for-current-user []
   (let [username (get-current-user)]
-    (println "username for user is" username)
+    (println "LS: username for user is" username)
     (->> (q '[:find ?section-uid ?order
               :in $ ?user-left-sidebar
               :where
@@ -199,17 +199,16 @@
                      [?e :block/uid ?uid]]
                    uid)))
 (defn custom-keyword [key]
-  (println "+++" key)
   (if (.startsWith (str key) ":")
     (keyword (subs (str key) 2))
     (keyword key)))
 
 (defn query-builder-run-query [query-block]
-  (println "query block to run query" query-block)
+  (println "LS: query block to run query" query-block)
   (-> (.runQuery (.-queryBuilder (.-extension (.-roamjs js/window)))
                  (str query-block))
       (.then (fn [res]
-               (println "result from query block" query-block "-- Res --" res)
+               (println "LS: result from query block" query-block "-- Res --" res)
                (js->clj res :value-fn custom-keyword)))))
 
 
@@ -225,7 +224,7 @@
 (defn add-command-in-context-menu-for-section [section-uid label]
   (let [section-title   (get-block-string section-uid)
         child-block-uid (:uid (get-child-block-with-text section-uid "Children"))]
-    (println "section-title" section-title child-block-uid section-title)
+    (println "LS: section-title" section-title child-block-uid section-title)
     (js/roamAlphaAPI.ui.blockContextMenu.addCommand
       #js {:label label
            :display-conditional (fn [block-context] true) ;; You can modify this function to determine when the command should be displayed
@@ -249,7 +248,7 @@
 (defn get-current-page []
      (-> (js/roamAlphaAPI.ui.mainWindow.getOpenPageOrBlockUid)
          (.then (fn [uid]
-                  (println "current page uid"uid )
+                  (println "LS: current page uid"uid )
                   (or {:page (ffirst (q '[:find ?page-title
                                           :in $ ?page-uid
                                           :where
@@ -264,10 +263,10 @@
     (js/roamAlphaAPI.ui.commandPalette.addCommand
       #js {:label label
            :callback (fn []
-                       (println "child block uid" child-block-uid)
+                       (println "LS: child block uid" child-block-uid)
                        (-> (get-current-page)
                            (.then (fn [current-page]
-                                    (println "current page"  current-page)
+                                    (println "LS: current page"  current-page)
                                     (.createBlock (.-roamAlphaAPI js/window)
                                                   (clj->js {:location
                                                             {:parent-uid child-block-uid
@@ -324,7 +323,7 @@
 
                      (-> (.deletePage (.-roamAlphaAPI js/window) (clj->js {:page {:uid ruid}}))
                          (.then (fn []
-                                  (println "Page deleted successfully!"))))
+                                  (println "LS: Page deleted successfully!"))))
 
                      username))))))
 

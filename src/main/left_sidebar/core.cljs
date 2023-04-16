@@ -16,7 +16,7 @@
         global-sections   (utils/get-global-left-sidebar-uids)]
     (.setAttribute todo-container "class" "todos-sidebar-container")
     (personal-shortcuts/create-left-sidebar-page)
-    (println "global sections" global-sections)
+    (println "LS: global sections" global-sections)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
       (rd/render  [:div
@@ -49,6 +49,6 @@
 
 
 (defn init []
-  (println "Hello from left-sidebar plugin!")
+  (println "LS: Hello from left-sidebar plugin!")
   ;(pw)
  (start))
