@@ -20,10 +20,13 @@
          (js->clj :keywordize-keys true)))))
 
 (defn get-uid-from-localstorage []
-  (let [data (nth (reader/read-string
-                    (.getItem (.-localStorage js/window) "globalAppState"))
-                  6)]
-    (loop [remaining data
+  (let [user-data (loop [remaining  (reader/read-string
+                                        (.getItem (.-localStorage js/window) "globalAppState"))
+                         prev       nil]
+                    (if (= "~:user" prev)
+                      (first remaining)
+                      (recur (rest remaining) (first remaining))))]
+    (loop [remaining user-data
            prev nil]
       (when (seq remaining)
         (if (= "~:uid" prev)
@@ -126,11 +129,11 @@
                             [?cce :block/string ?child-child-text]]
                    block-uid child-text child-child-text)))
 
-(get-child-of-child-under-block "O84zhInr1" "Settings" "Open?: True")
 
 (defn get-left-sidebar-section-uids-for-current-user []
+  (println "LS 2: get left sidebar section uids for current user")
   (let [username (get-current-user)]
-    (println "LS: username for user is" username)
+    (println "LS 3: username for user is" username)
     (->> (q '[:find ?section-uid ?order
               :in $ ?user-left-sidebar
               :where
@@ -148,8 +151,6 @@
   (ffirst (q '[:find (pull ?e [:block/string :block/uid {:block/children ...}])
                      :in $ ?e]
                     eid)))
-;(get-children-for-eid (first (get-left-sidebar-section-uids-for-current-user)))
-(get-left-sidebar-section-uids-for-current-user)
 
 (defn str-to-num [s]
   (let [n (js/parseInt s)]

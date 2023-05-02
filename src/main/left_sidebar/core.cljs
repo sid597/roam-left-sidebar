@@ -9,6 +9,7 @@
 
 
 (defn start []
+  (println "LS 1: Starting left-sidebar plugin")
   (let [sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
         todo-container     (js/document.createElement "div")
         starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))
@@ -51,5 +52,4 @@
 
 (defn init []
   (println "LS: Hello from left-sidebar plugin!")
-  ;(pw)
- (start))
+  (start))
