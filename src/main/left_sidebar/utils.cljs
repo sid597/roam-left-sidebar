@@ -20,10 +20,13 @@
          (js->clj :keywordize-keys true)))))
 
 (defn get-uid-from-localstorage []
-  (let [data (nth (reader/read-string
-                    (.getItem (.-localStorage js/window) "globalAppState"))
-                  6)]
-    (loop [remaining data
+  (let [user-data (loop [remaining  (reader/read-string
+                                        (.getItem (.-localStorage js/window) "globalAppState"))
+                         prev       nil]
+                    (if (= "~:user" prev)
+                      (first remaining)
+                      (recur (rest remaining) (first remaining))))]
+    (loop [remaining user-data
            prev nil]
       (when (seq remaining)
         (if (= "~:uid" prev)
@@ -92,7 +95,7 @@
 
 (defn get-page-name-from-ref [list-of-pages]
   (remove nil? (map (fn [s]
-                      (println "LS: get page name from string" s)
+                      #_(println "LS: get page name from string" s)
                       (second (re-find #"\[\[(.+)\]\]" s)))
                     list-of-pages)))
 
@@ -116,7 +119,7 @@
 
 
 (defn get-child-of-child-under-block [block-uid child-text child-child-text]
-  (println "LS: block-uid" block-uid "child-text" child-text "child-child-text" child-child-text)
+  #_(println "LS: block-uid" block-uid "child-text" child-text "child-child-text" child-child-text)
   (ffirst (q '[:find (pull ?cce [:block/string :block/uid])
                      :in $ ?block-uid ?child-text ?child-child-text
                      :where [?e :block/uid ?block-uid]
@@ -126,11 +129,11 @@
                             [?cce :block/string ?child-child-text]]
                    block-uid child-text child-child-text)))
 
-(get-child-of-child-under-block "O84zhInr1" "Settings" "Open?: True")
 
 (defn get-left-sidebar-section-uids-for-current-user []
+  (println "LS 2: get left sidebar section uids for current user")
   (let [username (get-current-user)]
-    (println "LS: username for user is" username)
+    (println "LS 3: username for user is" username)
     (->> (q '[:find ?section-uid ?order
               :in $ ?user-left-sidebar
               :where
@@ -148,8 +151,6 @@
   (ffirst (q '[:find (pull ?e [:block/string :block/uid {:block/children ...}])
                      :in $ ?e]
                     eid)))
-;(get-children-for-eid (first (get-left-sidebar-section-uids-for-current-user)))
-(get-left-sidebar-section-uids-for-current-user)
 
 (defn str-to-num [s]
   (let [n (js/parseInt s)]
@@ -204,11 +205,11 @@
     (keyword key)))
 
 (defn query-builder-run-query [query-block]
-  (println "LS: query block to run query" query-block)
+  #_(println "LS: query block to run query" query-block)
   (-> (.runQuery (.-queryBuilder (.-extension (.-roamjs js/window)))
                  (str query-block))
       (.then (fn [res]
-               (println "LS: result from query block" query-block "-- Res --" res)
+               #_(println "LS: result from query block" query-block "-- Res --" res)
                (js->clj res :value-fn custom-keyword)))))
 
 
@@ -224,7 +225,7 @@
 (defn add-command-in-context-menu-for-section [section-uid label]
   (let [section-title   (get-block-string section-uid)
         child-block-uid (:uid (get-child-block-with-text section-uid "Children"))]
-    (println "LS: section-title" section-title child-block-uid section-title)
+    #_(println "LS: section-title" section-title child-block-uid section-title)
     (js/roamAlphaAPI.ui.blockContextMenu.addCommand
       #js {:label label
            :display-conditional (fn [block-context] true) ;; You can modify this function to determine when the command should be displayed
@@ -248,7 +249,7 @@
 (defn get-current-page []
      (-> (js/roamAlphaAPI.ui.mainWindow.getOpenPageOrBlockUid)
          (.then (fn [uid]
-                  (println "LS: current page uid"uid )
+                  #_(println "LS: current page uid"uid )
                   (or {:page (ffirst (q '[:find ?page-title
                                           :in $ ?page-uid
                                           :where
@@ -263,10 +264,10 @@
     (js/roamAlphaAPI.ui.commandPalette.addCommand
       #js {:label label
            :callback (fn []
-                       (println "LS: child block uid" child-block-uid)
+                       #_(println "LS: child block uid" child-block-uid)
                        (-> (get-current-page)
                            (.then (fn [current-page]
-                                    (println "LS: current page"  current-page)
+                                    #_(println "LS: current page"  current-page)
                                     (.createBlock (.-roamAlphaAPI js/window)
                                                   (clj->js {:location
                                                             {:parent-uid child-block-uid
@@ -301,7 +302,7 @@
         children-block-uid (.generateUID (.-util (.-roamAlphaAPI js/window)))
         settings-uid (.generateUID (.-util (.-roamAlphaAPI js/window)))
         settings ["Type: blocks-and-pages" "Show: 5" "Collapsable?: true" "Open?: true" "Actions:"]]
-    (println "LS: new section uid" new-section-uid "children block uid" children-block-uid "block uid" block-uid)
+    #_(println "LS: new section uid" new-section-uid "children block uid" children-block-uid "block uid" block-uid)
     (-> (create-block {:location {:parent-uid parent-block :order "last"}
                        :block {:string (str "((" block-uid "))") :uid new-section-uid}})
         (.then (fn []
@@ -326,7 +327,7 @@
   (let [username (get-current-user)
         section-uid (:uid (get-block-uid-for-block-on-page "Sections" (str username "/left-sidebar")))
         label "Add the current block as a section"]
-    (println "LS:Add section command section uid" section-uid)
+    #_(println "LS:Add section command section uid" section-uid)
     (cljs.pprint/pprint  section-uid)
     (js/roamAlphaAPI.ui.blockContextMenu.addCommand
       #js {:label label
@@ -371,7 +372,7 @@
 
                      (-> (.deletePage (.-roamAlphaAPI js/window) (clj->js {:page {:uid ruid}}))
                          (.then (fn []
-                                  (println "LS: Page deleted successfully!"))))
+                                  #_(println "LS: Page deleted successfully!"))))
 
                      username))))))
 

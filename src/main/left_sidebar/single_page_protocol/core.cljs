@@ -50,7 +50,7 @@
      :open?          (r/atom (utils/str-to-bool (:Open? all-settings)))}))
 
 (defn parse-str-for-refs [block-string]
-  (println "LS: parse str for refs" block-string)
+  ;#_(println "LS: parse str for refs" block-string)
   (cond
     (re-matches #"\(\(\s*([^)]+)\s*\)\)" block-string) {:uid (second (re-find #"\(\(\s*([^)]+)\s*\)\)" block-string))}
     (re-matches #"\[\[(.*)\]\]" block-string) {:page (second (re-find #"\[\[(.*)\]\]" block-string))}
@@ -151,7 +151,7 @@
                                         (if (= @click-count 1)
                                           ;; Single click handler
                                           (when (and collapsable? is-open-uid)
-                                            (println "LS: single clicked")
+                                            #_(println "LS: single clicked")
                                             (.updateBlock (.-roamAlphaAPI js/window)
                                                           (clj->js {:block
                                                                     {:uid (:uid is-open-uid)
@@ -160,11 +160,11 @@
 
                                           ;; double click handler
                                           (do
-                                            (println "LS: double click")
+                                            #_(println "LS: double click")
                                             (-> (.openBlock (.-mainWindow (.-ui (.-roamAlphaAPI js/window)))
                                                             (clj->js {:block
                                                                       {:uid uid}}))
-                                                (.then (println "LS: double clicked left sidebar section")))))
+                                                (.then () #_(println "LS: double clicked left sidebar section")))))
                                         (reset! click-count 0)
                                         (reset! waiting? false)))
                                     250)))
@@ -201,13 +201,13 @@
          (take (:show settings) children))])))
 
 (defn get-children-for-section [section-uid section-settings callback]
-  (println "LS: get-children-for-section" section-uid section-settings)
+  #_(println "LS: get-children-for-section" section-uid section-settings)
   (let [type (:type section-settings)
         child-block (utils/get-child-block-with-text section-uid
                                                      (if (= "query" type)
                                                        "Query block"
                                                        "Children"))]
-    (println "LS: child block for section" section-uid child-block)
+    #_(println "LS: child block for section" section-uid child-block)
     (cond (= "query" type)
           (do
             (-> (utils/query-builder-run-query (-> child-block

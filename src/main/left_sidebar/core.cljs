@@ -9,6 +9,7 @@
 
 
 (defn start []
+  (println "LS 1: Starting left-sidebar plugin")
   (let [sidebar-container  (js/document.querySelector ".roam-sidebar-container .starred-pages-wrapper")
         todo-container     (js/document.createElement "div")
         starred-pages-html (.-outerHTML (.querySelector js/document ".starred-pages"))
@@ -17,7 +18,7 @@
     (.setAttribute todo-container "class" "todos-sidebar-container")
     (personal-shortcuts/create-left-sidebar-page)
     (utils/add-section-command-to-context-menu)
-    (println "LS: global sections" global-sections)
+    #_(println "LS: global sections" global-sections)
     (when sidebar-container
       (.remove (.querySelector sidebar-container ".starred-pages"))
       (rd/render  [:div
@@ -50,6 +51,5 @@
 
 
 (defn init []
-  (println "LS: Hello from left-sidebar plugin!")
-  ;(pw)
- (start))
+  #_(println "LS: Hello from left-sidebar plugin!")
+  (start))
