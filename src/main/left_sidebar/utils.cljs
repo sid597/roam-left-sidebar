@@ -131,9 +131,9 @@
 
 
 (defn get-left-sidebar-section-uids-for-current-user []
-  (println "LS 2: get left sidebar section uids for current user")
+  #_(println "LS 2: get left sidebar section uids for current user")
   (let [username (get-current-user)]
-    (println "LS 3: username for user is" username)
+    #_(println "LS 3: username for user is" username)
     (->> (q '[:find ?section-uid ?order
               :in $ ?user-left-sidebar
               :where
@@ -230,7 +230,7 @@
       #js {:label label
            :display-conditional (fn [block-context] true) ;; You can modify this function to determine when the command should be displayed
            :callback (fn [block-context]
-                       (cljs.pprint/pprint block-context)
+                       #_(cljs.pprint/pprint block-context)
                        (let [block-context-clj (js->clj block-context :keywordize-keys true)
                              block-to-add-uid   (:block-uid block-context-clj)
 
@@ -328,7 +328,7 @@
         section-uid (:uid (get-block-uid-for-block-on-page "Sections" (str username "/left-sidebar")))
         label "Add the current block as a section"]
     #_(println "LS:Add section command section uid" section-uid)
-    (cljs.pprint/pprint  section-uid)
+    #_(cljs.pprint/pprint  section-uid)
     (js/roamAlphaAPI.ui.blockContextMenu.addCommand
       #js {:label label
            :display-conditional (fn [block-context] true) ;; You can modify this function to determine when the command should be displayed
@@ -372,7 +372,7 @@
 
                      (-> (.deletePage (.-roamAlphaAPI js/window) (clj->js {:page {:uid ruid}}))
                          (.then (fn []
-                                  #_(println "LS: Page deleted successfully!"))))
+                                  (println "LS: Page deleted successfully!"))))
 
                      username))))))
 

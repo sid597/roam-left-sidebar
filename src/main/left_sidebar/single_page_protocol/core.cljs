@@ -164,7 +164,7 @@
                                             (-> (.openBlock (.-mainWindow (.-ui (.-roamAlphaAPI js/window)))
                                                             (clj->js {:block
                                                                       {:uid uid}}))
-                                                (.then () #_(println "LS: double clicked left sidebar section")))))
+                                                (.then (println "LS: double clicked left sidebar section")))))
                                         (reset! click-count 0)
                                         (reset! waiting? false)))
                                     250)))
@@ -268,7 +268,7 @@
         (f)))
 
     (let [action-fns (create-action-fns section-uids)]
-      (cljs.pprint/pprint action-fns)
+      #_(cljs.pprint/pprint action-fns)
       (doseq [f action-fns]
         (f)))
 
